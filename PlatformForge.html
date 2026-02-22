@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PlatformForge Engine</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0d0f14;
+  --panel:#13161e;
+  --panel2:#1a1e2a;
+  --border:#2a2f3d;
+  --accent:#f47b20;
+  --accent2:#e63946;
+  --text:#c8ccd8;
+  --text2:#7a8096;
+  --canvas-bg:#080a0f;
+  --tab-h:42px;
+  --prop-w:270px;
+  --shape-w:180px;
+  --font:'Rajdhani',sans-serif;
+  --mono:'Share Tech Mono',monospace;
+}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  user-select:none;
+}
+
+/* ── TOP BAR ── */
+#topbar{
+  height:var(--tab-h);
+  background:var(--panel);
+  border-bottom:2px solid var(--accent);
+  display:flex;
+  align-items:center;
+  flex-shrink:0;
+  position:relative;
+}
+#logo{
+  padding:0 18px;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--accent);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+#logo span{color:var(--text2);}
+#tabs{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:4px;
+}
+.tab-btn{
+  padding:6px 28px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-bottom:none;
+  color:var(--text2);
+  font-family:var(--font);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:1px;
+  cursor:pointer;
+  text-transform:uppercase;
+  transition:all .15s;
+  border-radius:4px 4px 0 0;
+}
+.tab-btn.active{
+  background:var(--bg);
+  color:var(--accent);
+  border-color:var(--accent);
+}
+#playbar{
+  margin-left:auto;
+  padding-right:12px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.topbtn{
+  padding:5px 16px;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text2);
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:1px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all .15s;
+  text-transform:uppercase;
+}
+.topbtn:hover{border-color:var(--text2);color:var(--text);}
+#btn-play{border-color:var(--accent);color:var(--accent);}
+#btn-play:hover{background:var(--accent);color:#000;}
+#btn-play.active{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+
+/* ── MAIN LAYOUT ── */
+#main-content{
+  flex:1;
+  display:flex;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ── PROPERTIES PANEL (LEFT) ── */
+#prop-panel{
+  width:var(--prop-w);
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  flex-shrink:0;
+}
+#prop-panel .panel-title{
+  padding:10px 14px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text2);
+  text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+  background:var(--panel2);
+}
+#prop-content{
+  flex:1;
+  overflow-y:auto;
+  padding:12px;
+}
+#prop-content::-webkit-scrollbar{width:4px;}
+#prop-content::-webkit-scrollbar-track{background:transparent;}
+#prop-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.prop-section{
+  margin-bottom:14px;
+}
+.prop-section-title{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:8px;
+  padding-bottom:4px;
+  border-bottom:1px solid var(--border);
+}
+.prop-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+  gap:8px;
+}
+.prop-label{
+  font-size:12px;
+  color:var(--text2);
+  white-space:nowrap;
+  flex-shrink:0;
+  min-width:90px;
+}
+.prop-input{
+  flex:1;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:13px;
+  padding:4px 8px;
+  border-radius:3px;
+  outline:none;
+  min-width:0;
+  transition:border-color .15s;
+}
+.prop-input:focus{border-color:var(--accent);}
+.prop-input[type=color]{
+  padding:2px 4px;
+  height:28px;
+  cursor:pointer;
+  width:60px;
+}
+.prop-input[type=checkbox]{
+  width:16px;
+  height:16px;
+  cursor:pointer;
+  accent-color:var(--accent);
+  flex:unset;
+}
+.prop-input[type=number]{-moz-appearance:textfield;}
+.prop-input[type=number]::-webkit-inner-spin-button{opacity:.5;}
+.no-select-msg{
+  color:var(--text2);
+  font-size:13px;
+  text-align:center;
+  margin-top:40px;
+  line-height:1.8;
+}
+.no-select-msg b{color:var(--accent);display:block;font-size:22px;margin-bottom:8px;}
+.del-btn{
+  width:100%;
+  margin-top:14px;
+  padding:7px;
+  background:transparent;
+  border:1px solid var(--accent2);
+  color:var(--accent2);
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all .15s;
+}
+.del-btn:hover{background:var(--accent2);color:#fff;}
+
+/* ── CANVAS AREA ── */
+#canvas-area{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+  background:var(--canvas-bg);
+}
+#canvas-toolbar{
+  height:36px;
+  background:var(--panel2);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  padding:0 12px;
+  gap:10px;
+  flex-shrink:0;
+}
+/* zoom controls in toolbar */
+.zoom-group{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  margin-left:auto;
+}
+.zoom-btn{
+  width:22px;height:22px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text2);
+  font-size:14px;
+  font-family:var(--font);
+  font-weight:700;
+  cursor:pointer;
+  border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;
+  line-height:1;
+  padding:0;
+}
+.zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
+#zoom-label{
+  font-size:11px;
+  font-family:var(--mono);
+  color:var(--accent);
+  min-width:38px;
+  text-align:center;
+  letter-spacing:0.5px;
+}
+.zoom-fit-btn{
+  padding:2px 7px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text2);
+  font-size:10px;
+  font-family:var(--font);
+  font-weight:700;
+  letter-spacing:1px;
+  cursor:pointer;
+  border-radius:3px;
+  text-transform:uppercase;
+  transition:all .12s;
+}
+.zoom-fit-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* clear-selection button in toolbar */
+#btn-clear-sel{
+  display:none;
+  padding:3px 10px;
+  background:transparent;
+  border:1px solid #4a9eff;
+  color:#4a9eff;
+  font-family:var(--font);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  cursor:pointer;
+  border-radius:3px;
+  text-transform:uppercase;
+  transition:all .15s;
+  white-space:nowrap;
+}
+#btn-clear-sel:hover{background:#4a9eff;color:#000;}
+
+/* infinite play button in BG modal */
+#btn-inf-play{
+  width:100%;
+  padding:11px;
+  background:transparent;
+  border:2px solid #4a9eff;
+  color:#4a9eff;
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:5px;
+  transition:all .2s;
+}
+#btn-inf-play:hover:not(:disabled){background:#4a9eff;color:#000;box-shadow:0 0 18px rgba(74,158,255,.4);}
+#btn-inf-play:disabled{opacity:.35;cursor:not-allowed;border-color:var(--border);color:var(--text2);}
+.tool-label{
+  font-size:11px;
+  color:var(--text2);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+#obj-count{color:var(--accent);font-weight:700;}
+#play-hint{
+  margin-left:auto;
+  font-size:11px;
+  color:var(--text2);
+  font-style:italic;
+}
+#canvas-wrap{
+  flex:1;
+  overflow:auto;
+  position:relative;
+  background:var(--canvas-bg);
+  background-image:
+    radial-gradient(circle, #1e2230 1px, transparent 1px);
+  background-size:20px 20px;
+}
+#canvas-wrap::-webkit-scrollbar{width:10px;height:10px;}
+#canvas-wrap::-webkit-scrollbar-track{background:#0a0c12;}
+#canvas-wrap::-webkit-scrollbar-thumb{background:#2a2f3d;border-radius:5px;border:2px solid #0a0c12;}
+#canvas-wrap::-webkit-scrollbar-thumb:hover{background:#3a4055;}
+#canvas-wrap::-webkit-scrollbar-corner{background:#0a0c12;}
+/* Spacer div that sets scroll area to zoom*canvasSize */
+#canvas-spacer{
+  position:relative;
+  display:inline-block;
+  margin:20px;
+}
+#gameCanvas{
+  display:block;
+  cursor:crosshair;
+  image-rendering:pixelated;
+  transform-origin:top left;
+  box-shadow:0 0 0 1px rgba(244,123,32,0.25), 0 8px 40px rgba(0,0,0,0.7);
+}
+#gameCanvas.moving{cursor:move;}
+#gameCanvas.playing{cursor:default;}
+#gameCanvas.resize-nw{cursor:nw-resize;}
+#gameCanvas.resize-ne{cursor:ne-resize;}
+#gameCanvas.resize-sw{cursor:sw-resize;}
+#gameCanvas.resize-se{cursor:se-resize;}
+#gameCanvas.resize-n{cursor:n-resize;}
+#gameCanvas.resize-s{cursor:s-resize;}
+#gameCanvas.resize-e{cursor:e-resize;}
+#gameCanvas.resize-w{cursor:w-resize;}
+
+/* ── RIGHT PANEL ── */
+#right-panel-wrap{
+  position:relative;
+  display:flex;
+  flex-shrink:0;
+}
+#right-panel{
+  width:var(--shape-w);
+  background:var(--panel);
+  border-left:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  transition:width .2s ease;
+}
+#right-panel.closed{width:0;border-left:none;}
+#right-panel .panel-title{
+  padding:10px 14px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text2);
+  text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+  background:var(--panel2);
+  white-space:nowrap;
+}
+#shapes-list{
+  flex:1;
+  overflow-y:auto;
+  padding:12px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.shape-item{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:10px;
+  cursor:grab;
+  transition:all .15s;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.shape-item:hover{border-color:var(--accent);transform:translateY(-1px);}
+.shape-item:active{cursor:grabbing;}
+.shape-preview{
+  width:100%;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:6px;
+}
+.shape-name{
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--text);
+  text-transform:uppercase;
+}
+.shape-desc{
+  font-size:10px;
+  color:var(--text2);
+  margin-top:2px;
+}
+.s-rect{display:block;background:#4a9eff;border-radius:2px;}
+.s-circle{display:block;background:#f47b20;border-radius:50%;}
+
+#toggle-right{
+  position:absolute;
+  left:-18px;
+  top:50%;
+  transform:translateY(-50%);
+  width:18px;
+  height:50px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-right:none;
+  border-radius:4px 0 0 4px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text2);
+  font-size:10px;
+  transition:background .15s;
+  z-index:10;
+}
+#toggle-right:hover{background:var(--panel);color:var(--accent);}
+
+/* ── SCRIPT TAB ── */
+#script-tab{
+  display:none;
+  flex:1;
+  flex-direction:column;
+  overflow:hidden;
+}
+#script-tab.active{display:flex;}
+#main-tab.active{display:flex;flex:1;overflow:hidden;}
+#main-tab{display:none;}
+
+.script-grid{
+  display:grid;
+  grid-template-columns:1fr 2fr 1fr;
+  grid-template-rows:1fr;
+  gap:0;
+  flex:1;
+  overflow:hidden;
+}
+.code-pane{
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid var(--border);
+  overflow:hidden;
+}
+.code-pane:last-child{border-right:none;}
+.code-pane-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 14px;
+  background:var(--panel2);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.code-pane-title{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.pane-html .code-pane-title{color:#e06c75;}
+.pane-js .code-pane-title{color:#e5c07b;}
+.pane-css .code-pane-title{color:#56b6c2;}
+.copy-btn{
+  padding:3px 10px;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text2);
+  font-family:var(--font);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:1px;
+  cursor:pointer;
+  border-radius:3px;
+  text-transform:uppercase;
+  transition:all .15s;
+}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.copy-btn.copied{border-color:#98c379;color:#98c379;}
+.code-area{
+  flex:1;
+  overflow:auto;
+  padding:14px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.7;
+  color:#abb2bf;
+  white-space:pre;
+  background:var(--canvas-bg);
+  tab-size:2;
+}
+.code-area::-webkit-scrollbar{width:6px;height:6px;}
+.code-area::-webkit-scrollbar-thumb{background:var(--border);}
+/* syntax colors */
+.kw{color:#c678dd;}
+.fn{color:#61afef;}
+.str{color:#98c379;}
+.num{color:#d19a66;}
+.cmt{color:#5c6370;font-style:italic;}
+.prop{color:#e06c75;}
+
+/* Ghost drag */
+#drag-ghost{
+  position:fixed;
+  pointer-events:none;
+  z-index:9999;
+  opacity:.7;
+  transform:translate(-50%,-50%);
+  display:none;
+}
+
+/* Grid overlay on canvas */
+.grid-info{
+  position:absolute;
+  bottom:8px;
+  right:8px;
+  font-size:10px;
+  color:var(--text2);
+  font-family:var(--mono);
+  background:rgba(0,0,0,.5);
+  padding:3px 8px;
+  border-radius:3px;
+  pointer-events:none;
+}
+
+/* ── BACKGROUND SETTINGS MODAL ── */
+#bg-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+}
+#bg-overlay.open{display:flex;}
+#bg-modal{
+  background:var(--panel);
+  border:1px solid var(--accent);
+  border-radius:8px;
+  width:380px;
+  max-height:90vh;
+  overflow-y:auto;
+  box-shadow:0 0 40px rgba(244,123,32,.25);
+  flex-direction:column;
+  display:flex;
+}
+#bg-modal::-webkit-scrollbar{width:4px;}
+#bg-modal::-webkit-scrollbar-thumb{background:var(--border);}
+#bg-modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:13px 18px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel2);
+  border-radius:8px 8px 0 0;
+  flex-shrink:0;
+}
+#bg-modal-header h2{
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+#bg-modal-close{
+  background:transparent;
+  border:none;
+  color:var(--text2);
+  font-size:20px;
+  cursor:pointer;
+  line-height:1;
+  transition:color .15s;
+}
+#bg-modal-close:hover{color:var(--accent2);}
+#bg-modal-body{
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+.bg-section{
+  margin-bottom:16px;
+}
+.bg-section-title{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:10px;
+  padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.bg-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:10px;
+  gap:10px;
+}
+.bg-label{
+  font-size:13px;
+  color:var(--text2);
+  flex-shrink:0;
+  min-width:110px;
+}
+.bg-input{
+  flex:1;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:13px;
+  padding:5px 9px;
+  border-radius:3px;
+  outline:none;
+  transition:border-color .15s;
+}
+.bg-input:focus{border-color:var(--accent);}
+.bg-input[type=color]{
+  padding:2px 4px;
+  height:30px;
+  cursor:pointer;
+  width:64px;
+  flex:unset;
+}
+.bg-input[type=checkbox]{
+  width:17px;height:17px;cursor:pointer;
+  accent-color:var(--accent);flex:unset;
+}
+.bg-input[type=number]{-moz-appearance:textfield;}
+.bg-input[type=number]::-webkit-inner-spin-button{opacity:.5;}
+
+/* Lava button special */
+#btn-lava{
+  width:100%;
+  padding:11px;
+  background:transparent;
+  border:2px solid #ff4500;
+  color:#ff6a2f;
+  font-family:var(--font);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:5px;
+  transition:all .2s;
+  position:relative;
+  overflow:hidden;
+}
+#btn-lava::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,#ff4500,#ff8c00,#ff4500);
+  background-size:200% 100%;
+  opacity:0;
+  transition:opacity .2s;
+  animation:lava-shimmer 2s linear infinite;
+}
+@keyframes lava-shimmer{
+  0%{background-position:0% 0%}
+  100%{background-position:200% 0%}
+}
+#btn-lava:hover::before{opacity:1;}
+#btn-lava:hover{color:#fff;border-color:#ff8c00;box-shadow:0 0 20px rgba(255,69,0,.5);}
+#btn-lava span{position:relative;z-index:1;}
+#btn-lava.lava-on{
+  background:linear-gradient(90deg,#c0392b,#e74c3c,#c0392b);
+  background-size:200% 100%;
+  animation:lava-shimmer 1.5s linear infinite;
+  border-color:#ff4500;
+  color:#fff;
+  box-shadow:0 0 24px rgba(255,69,0,.6);
+}
+#btn-lava.lava-on::before{opacity:0;}
+
+.apply-btn{
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  background:var(--accent);
+  border:none;
+  color:#000;
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:4px;
+  transition:all .15s;
+}
+.apply-btn:hover{background:#ffaa55;box-shadow:0 0 14px rgba(244,123,32,.4);}
+
+/* Lava floor visual overlay on canvas */
+#lava-indicator{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  pointer-events:none;
+  background:linear-gradient(90deg,#ff4500,#ff8c00,#ff6600,#ff4500);
+  background-size:300% 100%;
+  animation:lava-flow 2s linear infinite;
+  opacity:0;
+  transition:opacity .3s;
+  height:18px;
+}
+#lava-indicator.active{opacity:.85;}
+@keyframes lava-flow{
+  0%{background-position:0% 0%}100%{background-position:300% 0%}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="logo">Platform<span>Forge</span></div>
+  <div id="tabs">
+    <button class="tab-btn active" onclick="switchTab('main')">⚙ Main</button>
+    <button class="tab-btn" onclick="switchTab('script')">{ } Script</button>
+  </div>
+  <div id="playbar">
+    <span style="font-size:11px;color:var(--text2);letter-spacing:1px;">WORLD: <span id="world-size-label">800×500</span></span>
+    <button class="topbtn" id="btn-bgsettings" onclick="openBgModal()">🎨 BG Settings</button>
+    <button class="topbtn" id="btn-clear" onclick="clearAll()">Clear</button>
+    <button class="topbtn" id="btn-play" onclick="togglePlay()">▶ Play</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT AREA -->
+<div id="main-content">
+
+  <!-- MAIN TAB -->
+  <div id="main-tab" class="active">
+
+    <!-- LEFT: PROPERTIES -->
+    <div id="prop-panel">
+      <div class="panel-title">◈ Properties</div>
+      <div id="prop-content">
+        <div class="no-select-msg"><b>✦</b>Click an object<br>on the canvas to<br>edit its properties.<br><br>Drag shapes from<br>the right panel.</div>
+      </div>
+    </div>
+
+    <!-- CENTER: CANVAS -->
+    <div id="canvas-area">
+      <div id="canvas-toolbar">
+        <span class="tool-label">Objects: <span id="obj-count">0</span></span>
+        <span class="tool-label" id="sel-label" style="color:var(--accent)"></span>
+        <button id="btn-clear-sel" onclick="clearSelection()">✕ Deselect</button>
+        <span id="play-hint" style="font-size:11px;color:var(--text2);font-style:italic;">Drop shapes · Click/drag to select · Drag handles to resize · Shift+Click adds to selection</span>
+        <div class="zoom-group">
+          <button class="zoom-btn" onclick="zoomBy(-0.1)" title="Zoom Out">−</button>
+          <span id="zoom-label">100%</span>
+          <button class="zoom-btn" onclick="zoomBy(0.1)" title="Zoom In">+</button>
+          <button class="zoom-fit-btn" onclick="zoomFit()" title="Fit world in view">Fit</button>
+          <button class="zoom-fit-btn" onclick="setZoom(1)" title="Reset zoom to 100%">1:1</button>
+        </div>
+      </div>
+      <div id="canvas-wrap">
+        <div id="canvas-spacer">
+          <canvas id="gameCanvas" width="800" height="500"></canvas>
+          <div id="lava-indicator"></div>
+        </div>
+        <div class="grid-info" id="grid-info">x:0 y:0</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SHAPE LIBRARY -->
+    <div id="right-panel-wrap">
+      <div id="toggle-right" onclick="toggleRightPanel()" title="Toggle Shapes Panel">
+        <span id="toggle-arrow">◀</span>
+      </div>
+      <div id="right-panel">
+        <div class="panel-title">◈ Shapes</div>
+        <div id="shapes-list">
+          <div class="shape-item" data-type="platform" draggable="true" onmousedown="startPanelDrag(event,'platform')">
+            <div class="shape-preview"><span class="s-rect" style="width:80px;height:18px;background:#4a9eff;"></span></div>
+            <div class="shape-name">Platform</div>
+            <div class="shape-desc">Solid ground tile</div>
+          </div>
+          <div class="shape-item" data-type="player" draggable="true" onmousedown="startPanelDrag(event,'player')">
+            <div class="shape-preview"><span class="s-rect" style="width:32px;height:40px;background:#2ecc71;"></span></div>
+            <div class="shape-name">Player</div>
+            <div class="shape-desc">Controllable character</div>
+          </div>
+          <div class="shape-item" data-type="enemy" draggable="true" onmousedown="startPanelDrag(event,'enemy')">
+            <div class="shape-preview"><span class="s-rect" style="width:32px;height:36px;background:#e63946;"></span></div>
+            <div class="shape-name">Enemy</div>
+            <div class="shape-desc">Patrols left & right</div>
+          </div>
+          <div class="shape-item" data-type="circle" draggable="true" onmousedown="startPanelDrag(event,'circle')">
+            <div class="shape-preview"><span class="s-circle" style="width:36px;height:36px;background:#f47b20;"></span></div>
+            <div class="shape-name">Circle</div>
+            <div class="shape-desc">Round object</div>
+          </div>
+          <div class="shape-item" data-type="coin" draggable="true" onmousedown="startPanelDrag(event,'coin')">
+            <div class="shape-preview"><span class="s-circle" style="width:22px;height:22px;background:#ffd700;"></span></div>
+            <div class="shape-name">Coin</div>
+            <div class="shape-desc">Collectible item</div>
+          </div>
+          <div class="shape-item" data-type="block" draggable="true" onmousedown="startPanelDrag(event,'block')">
+            <div class="shape-preview"><span class="s-rect" style="width:40px;height:40px;background:#8b6914;border-radius:3px;"></span></div>
+            <div class="shape-name">Block</div>
+            <div class="shape-desc">Solid square block</div>
+          </div>
+          <div class="shape-item" data-type="spike" draggable="true" onmousedown="startPanelDrag(event,'spike')">
+            <div class="shape-preview">
+              <svg width="36" height="30"><polygon points="18,0 36,30 0,30" fill="#ff4757"/></svg>
+            </div>
+            <div class="shape-name">Spike</div>
+            <div class="shape-desc">Deals damage on touch</div>
+          </div>
+          <div class="shape-item" data-type="deco" draggable="true" onmousedown="startPanelDrag(event,'deco')">
+            <div class="shape-preview"><span class="s-rect" style="width:50px;height:25px;background:#9b59b6;opacity:.7;"></span></div>
+            <div class="shape-name">Decoration</div>
+            <div class="shape-desc">Visual only, no physics</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-tab -->
+
+  <!-- SCRIPT TAB -->
+  <div id="script-tab">
+    <div class="script-grid">
+      <div class="code-pane pane-html">
+        <div class="code-pane-header">
+          <span class="code-pane-title">.html</span>
+          <button class="copy-btn" onclick="copyCode('html',this)">Copy</button>
+        </div>
+        <div class="code-area" id="code-html"></div>
+      </div>
+      <div class="code-pane pane-js">
+        <div class="code-pane-header">
+          <span class="code-pane-title">.js</span>
+          <button class="copy-btn" onclick="copyCode('js',this)">Copy</button>
+        </div>
+        <div class="code-area" id="code-js"></div>
+      </div>
+      <div class="code-pane pane-css">
+        <div class="code-pane-header">
+          <span class="code-pane-title">.css</span>
+          <button class="copy-btn" onclick="copyCode('css',this)">Copy</button>
+        </div>
+        <div class="code-area" id="code-css"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- BG SETTINGS MODAL -->
+<div id="bg-overlay" onclick="closeBgModalOutside(event)">
+  <div id="bg-modal">
+    <div id="bg-modal-header">
+      <h2>🎨 Background Settings</h2>
+      <button id="bg-modal-close" onclick="closeBgModal()">✕</button>
+    </div>
+    <div id="bg-modal-body">
+
+      <div class="bg-section">
+        <div class="bg-section-title">World Size</div>
+        <div class="bg-row">
+          <span class="bg-label">Width (px)</span>
+          <input id="bg-world-w" class="bg-input" type="number" min="200" max="3000" step="40" value="800">
+        </div>
+        <div class="bg-row">
+          <span class="bg-label">Height (px)</span>
+          <input id="bg-world-h" class="bg-input" type="number" min="200" max="2000" step="40" value="500">
+        </div>
+        <button class="apply-btn" onclick="applyWorldSize()">↺ Apply World Size</button>
+      </div>
+
+      <div class="bg-section">
+        <div class="bg-section-title">Background Type</div>
+        <div class="bg-row">
+          <span class="bg-label">Style</span>
+          <select id="bg-type" class="bg-input" onchange="onBgTypeChange()">
+            <option value="gradient">Gradient (Sky)</option>
+            <option value="solid">Solid Color</option>
+            <option value="night">Night Sky</option>
+            <option value="sunset">Sunset</option>
+            <option value="custom">Custom Gradient</option>
+          </select>
+        </div>
+        <div class="bg-row" id="row-solid-color" style="display:none">
+          <span class="bg-label">Color</span>
+          <input id="bg-solid-color" class="bg-input" type="color" value="#0d0f14">
+        </div>
+        <div id="row-custom-grad">
+          <div class="bg-row">
+            <span class="bg-label">Top Color</span>
+            <input id="bg-color-top" class="bg-input" type="color" value="#0d0f14">
+          </div>
+          <div class="bg-row">
+            <span class="bg-label">Bottom Color</span>
+            <input id="bg-color-bot" class="bg-input" type="color" value="#1a1e2a">
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-section">
+        <div class="bg-section-title">Grid</div>
+        <div class="bg-row">
+          <span class="bg-label">Show Grid</span>
+          <input id="bg-show-grid" class="bg-input" type="checkbox" checked>
+        </div>
+        <div class="bg-row">
+          <span class="bg-label">Grid Color</span>
+          <input id="bg-grid-color" class="bg-input" type="color" value="#2a2f3d">
+        </div>
+        <div class="bg-row">
+          <span class="bg-label">Grid Size (px)</span>
+          <input id="bg-grid-size" class="bg-input" type="number" min="10" max="120" step="10" value="40">
+        </div>
+      </div>
+
+      <div class="bg-section">
+        <div class="bg-section-title">☠ Danger Zone</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+          When active, the entire <b style="color:#ff6a2f">bottom</b> of the world becomes molten lava that continuously deals damage to the player.
+        </div>
+        <button id="btn-lava" onclick="toggleLava()"><span>🌋 The Floor is Lava</span></button>
+        <div class="bg-row" id="row-lava-dmg" style="margin-top:10px;display:none">
+          <span class="bg-label">Lava Damage/s</span>
+          <input id="bg-lava-dmg" class="bg-input" type="number" min="1" max="999" value="25">
+        </div>
+        <div class="bg-row" id="row-lava-h" style="display:none">
+          <span class="bg-label">Lava Height (px)</span>
+          <input id="bg-lava-h" class="bg-input" type="number" min="4" max="200" value="20">
+        </div>
+      </div>
+
+      <div class="bg-section">
+        <div class="bg-section-title">🎮 Infinite Runner Mode</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+          Plays only your <b style="color:#4a9eff">selected objects</b> as an endless side-scrolling runner — like the Chrome dinosaur game. Obstacles scroll from right to left and loop back. Select objects first, then click below.
+        </div>
+        <div class="bg-row">
+          <span class="bg-label">Scroll Speed</span>
+          <input id="bg-inf-speed" class="bg-input" type="number" min="20" max="800" step="10" value="150">
+        </div>
+        <button id="btn-inf-play" onclick="startInfinitePlay()" disabled>🚀 Play Selected Area ∞</button>
+        <div id="inf-sel-warning" style="font-size:11px;color:#e63946;margin-top:8px;display:none">
+          ⚠ Select at least one object on the canvas first.
+        </div>
+      </div>
+
+    </div><!-- /bg-modal-body -->
+  </div>
+</div>
+
+<!-- DRAG GHOST -->
+<canvas id="drag-ghost" width="80" height="80"></canvas>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+const S = {
+  objects: [],
+  selected: null,          // primary (single) selected index — used for props + resize
+  selectedIndices: new Set(), // all selected indices (multi-select)
+  nextId: 1,
+  rightOpen: true,
+  playing: false,
+  playMode: 'normal',      // 'normal' | 'infinite'
+  panelDragType: null,
+  isDraggingFromPanel: false,
+  isDraggingOnCanvas: false,
+  isDraggingGroup: false,  // moving multiple selected objects together
+  dragGroupStart: [],      // [{idx,ox,oy}] snapshot at drag start
+  dragRefX: 0, dragRefY: 0,
+  isMarqueeSelecting: false,
+  marqueeX1: 0, marqueeY1: 0, marqueeX2: 0, marqueeY2: 0,
+  isResizing: false,
+  resizeHandle: null,
+  resizeStartX: 0, resizeStartY: 0,
+  resizeStartObj: null,
+  dragOffX: 0,
+  dragOffY: 0,
+  mouseX: 0,
+  mouseY: 0,
+  zoom: 1,
+  keys: {},
+  animFrame: null,
+  lastTime: 0,
+  playObjects: [],
+  score: 0,
+  gameOver: false,
+  gameWon: false,
+  // Infinite runner state
+  infScrollX: 0,
+  infScrollSpeed: 150,
+  bg: {
+    type: 'gradient',
+    solidColor: '#0d0f14',
+    colorTop: '#0d0f14',
+    colorBot: '#1a1e2a',
+    showGrid: true,
+    gridColor: '#2a2f3d',
+    gridSize: 40,
+    lava: false,
+    lavaDamage: 25,
+    lavaHeight: 20,
+  },
+};
+
+// ── Default templates for each shape type ──
+function defaultObj(type) {
+  const defs = {
+    platform:{ shape:'rect', w:120, h:24, color:'#4a9eff', isPlayer:false, isEnemy:false, isPlatform:true, isSolid:true, affectedByGravity:false, isDecorative:false, isCoin:false, isSpike:false, health:999, damage:0, speed:0, jumpForce:0, patrolDistance:100, name:'Platform' },
+    player:  { shape:'rect', w:32,  h:40, color:'#2ecc71', isPlayer:true,  isEnemy:false, isPlatform:false,isSolid:true, affectedByGravity:true,  isDecorative:false, isCoin:false, isSpike:false, health:100, damage:10,  speed:180, jumpForce:420, patrolDistance:0,   name:'Player' },
+    enemy:   { shape:'rect', w:32,  h:36, color:'#e63946', isPlayer:false, isEnemy:true,  isPlatform:false,isSolid:true, affectedByGravity:true,  isDecorative:false, isCoin:false, isSpike:false, health:50,  damage:20,  speed:80,  jumpForce:0,   patrolDistance:100, name:'Enemy' },
+    circle:  { shape:'circle',w:40, h:40, color:'#f47b20', isPlayer:false, isEnemy:false, isPlatform:false,isSolid:false,affectedByGravity:false, isDecorative:false, isCoin:false, isSpike:false, health:50,  damage:0,   speed:0,   jumpForce:0,   patrolDistance:0,   name:'Circle' },
+    coin:    { shape:'circle',w:20, h:20, color:'#ffd700', isPlayer:false, isEnemy:false, isPlatform:false,isSolid:false,affectedByGravity:false, isDecorative:false, isCoin:true,  isSpike:false, health:1,   damage:0,   speed:0,   jumpForce:0,   patrolDistance:0,   name:'Coin' },
+    block:   { shape:'rect', w:40,  h:40, color:'#8b6914', isPlayer:false, isEnemy:false, isPlatform:true, isSolid:true, affectedByGravity:false, isDecorative:false, isCoin:false, isSpike:false, health:999, damage:0,   speed:0,   jumpForce:0,   patrolDistance:0,   name:'Block' },
+    spike:   { shape:'tri',  w:36,  h:30, color:'#ff4757', isPlayer:false, isEnemy:false, isPlatform:false,isSolid:false,affectedByGravity:false, isDecorative:false, isCoin:false, isSpike:true,  health:999, damage:50,  speed:0,   jumpForce:0,   patrolDistance:0,   name:'Spike' },
+    deco:    { shape:'rect', w:60,  h:30, color:'#9b59b6', isPlayer:false, isEnemy:false, isPlatform:false,isSolid:false,affectedByGravity:false, isDecorative:true,  isCoin:false, isSpike:false, health:0,   damage:0,   speed:0,   jumpForce:0,   patrolDistance:0,   name:'Deco' },
+  };
+  return defs[type] || defs.platform;
+}
+
+function createObj(type, x, y) {
+  const d = defaultObj(type);
+  return {
+    id: S.nextId++,
+    type,
+    x, y,
+    w: d.w, h: d.h,
+    color: d.color,
+    name: d.name,
+    isPlayer: d.isPlayer,
+    isEnemy: d.isEnemy,
+    isPlatform: d.isPlatform,
+    isSolid: d.isSolid,
+    affectedByGravity: d.affectedByGravity,
+    isDecorative: d.isDecorative,
+    isCoin: d.isCoin,
+    isSpike: d.isSpike,
+    health: d.health,
+    maxHealth: d.health,
+    damage: d.damage,
+    speed: d.speed,
+    jumpForce: d.jumpForce,
+    patrolDistance: d.patrolDistance,
+    shape: d.shape,
+    // runtime physics
+    vx:0, vy:0, onGround:false,
+    patrolStart: x, patrolDir:1,
+    alive: true,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+// CANVAS SETUP
+// ════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const ghost = document.getElementById('drag-ghost');
+const gctx = ghost.getContext('2d');
+
+// ── DRAW OBJECT ──
+function drawObject(c, obj, selected, isPlay) {
+  const x = obj.x, y = obj.y, w = obj.w, h = obj.h;
+  c.save();
+  c.globalAlpha = obj.isDecorative ? 0.55 : 1;
+
+  if (obj.shape === 'circle') {
+    const r = Math.min(w, h) / 2;
+    c.beginPath();
+    c.arc(x + w/2, y + h/2, r, 0, Math.PI*2);
+    c.fillStyle = obj.color;
+    c.fill();
+    if (selected) { c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke(); }
+    // coin shine
+    if (obj.isCoin) {
+      c.beginPath();
+      c.arc(x + w/2 - r*0.2, y + h/2 - r*0.2, r*0.3, 0, Math.PI*2);
+      c.fillStyle = 'rgba(255,255,255,0.5)';
+      c.fill();
+    }
+  } else if (obj.shape === 'tri') {
+    c.beginPath();
+    c.moveTo(x + w/2, y);
+    c.lineTo(x + w, y + h);
+    c.lineTo(x, y + h);
+    c.closePath();
+    c.fillStyle = obj.color;
+    c.fill();
+    if (selected) { c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke(); }
+  } else {
+    // rect
+    c.fillStyle = obj.color;
+    c.fillRect(x, y, w, h);
+    // top highlight
+    c.fillStyle = 'rgba(255,255,255,0.12)';
+    c.fillRect(x, y, w, 3);
+    if (selected) { c.strokeStyle = '#fff'; c.lineWidth = 2; c.strokeRect(x+1, y+1, w-2, h-2); }
+  }
+
+  // Labels in editor
+  if (!isPlay) {
+    c.globalAlpha = 1;
+    c.font = 'bold 10px Rajdhani, sans-serif';
+    c.textAlign = 'center';
+    c.fillStyle = 'rgba(255,255,255,0.8)';
+    const label = obj.isPlayer ? '▶ PLAYER' : obj.isEnemy ? '✕ ENEMY' : obj.isCoin ? '● COIN' : obj.isSpike ? '▲ SPIKE' : '';
+    if (label) c.fillText(label, x + w/2, y + h/2 + 4);
+  }
+
+  // Health bar during play
+  if (isPlay && obj.isPlayer && obj.health > 0 && obj.maxHealth > 0) {
+    const bw = Math.max(w, 40), bh = 5;
+    const bx = x + (w - bw)/2, by = y - 10;
+    c.fillStyle = '#333';
+    c.fillRect(bx, by, bw, bh);
+    c.fillStyle = obj.health > obj.maxHealth*0.4 ? '#2ecc71' : '#e74c3c';
+    c.fillRect(bx, by, bw * (obj.health / obj.maxHealth), bh);
+  }
+
+  c.restore();
+}
+
+// ── SHARED BACKGROUND RENDERER ──
+function drawBackground(c, w, h) {
+  const bg = S.bg;
+  if (bg.type === 'solid') {
+    c.fillStyle = bg.solidColor;
+    c.fillRect(0, 0, w, h);
+  } else if (bg.type === 'custom') {
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, bg.colorTop);
+    g.addColorStop(1, bg.colorBot);
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+  } else if (bg.type === 'night') {
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#020510'); g.addColorStop(0.6, '#07102a'); g.addColorStop(1, '#0d1533');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    // stars
+    c.fillStyle = 'rgba(255,255,255,0.7)';
+    const rng = mulberry32(42);
+    for (let i = 0; i < 80; i++) {
+      const sx = rng() * w, sy = rng() * h * 0.7;
+      const sr = rng() * 1.5 + 0.3;
+      c.beginPath(); c.arc(sx, sy, sr, 0, Math.PI*2); c.fill();
+    }
+  } else if (bg.type === 'sunset') {
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#1a0533'); g.addColorStop(0.4, '#7b2d8b'); g.addColorStop(0.65, '#e05c2a');
+    g.addColorStop(0.85, '#f4a261'); g.addColorStop(1, '#2a1a0a');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+  } else {
+    // default gradient
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#0d0f14'); g.addColorStop(1, '#1a1e2a');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+  }
+}
+
+// Simple deterministic RNG for star positions
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ── DRAW EDITOR CANVAS ──
+function drawEditor() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const bg = S.bg;
+
+  // Background
+  drawBackground(ctx, canvas.width, canvas.height);
+
+  // Grid
+  if (bg.showGrid) {
+    ctx.strokeStyle = bg.gridColor + '80';
+    ctx.lineWidth = 0.5;
+    const gs = bg.gridSize || 40;
+    for (let x = 0; x <= canvas.width; x += gs) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += gs) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+  }
+
+  // Lava zone indicator in editor
+  if (bg.lava) {
+    const lh = bg.lavaHeight;
+    const grd = ctx.createLinearGradient(0, canvas.height - lh, canvas.width, canvas.height - lh);
+    grd.addColorStop(0, '#ff4500cc');
+    grd.addColorStop(0.5, '#ff8c00cc');
+    grd.addColorStop(1, '#ff4500cc');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, canvas.height - lh, canvas.width, lh);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = 'bold 10px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌋 LAVA', canvas.width/2, canvas.height - lh/2 + 4);
+  }
+
+  // World border
+  ctx.strokeStyle = 'rgba(244,123,32,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  // Objects — highlight all selected
+  for (let i = 0; i < S.objects.length; i++) {
+    const obj = S.objects[i];
+    const sel = S.selectedIndices.has(i);
+    drawObject(ctx, obj, sel, false);
+  }
+
+  // ── Selection visuals ──
+  ctx.save();
+
+  if (S.selectedIndices.size === 1 && S.selected !== null && S.selected < S.objects.length) {
+    // Single selection: dashed outline + 8 resize handles
+    const obj = S.objects[S.selected];
+    const mx = obj.x + obj.w/2, my = obj.y + obj.h/2;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(obj.x - 0.5, obj.y - 0.5, obj.w + 1, obj.h + 1);
+    ctx.setLineDash([]);
+    const handles = [
+      [obj.x,       obj.y      ],
+      [obj.x+obj.w, obj.y      ],
+      [obj.x,       obj.y+obj.h],
+      [obj.x+obj.w, obj.y+obj.h],
+      [mx,          obj.y      ],
+      [mx,          obj.y+obj.h],
+      [obj.x,       my         ],
+      [obj.x+obj.w, my         ],
+    ];
+    handles.forEach(([hx, hy]) => {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(hx - 4, hy - 4, 8, 8);
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(hx - 4, hy - 4, 8, 8);
+    });
+
+  } else if (S.selectedIndices.size > 1) {
+    // Multi selection: compute bounding box + dashed blue outline
+    let bx1 = Infinity, by1 = Infinity, bx2 = -Infinity, by2 = -Infinity;
+    S.selectedIndices.forEach(i => {
+      const o = S.objects[i];
+      if (!o) return;
+      bx1 = Math.min(bx1, o.x); by1 = Math.min(by1, o.y);
+      bx2 = Math.max(bx2, o.x + o.w); by2 = Math.max(by2, o.y + o.h);
+    });
+    ctx.strokeStyle = '#4a9eff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(bx1 - 2, by1 - 2, bx2 - bx1 + 4, by2 - by1 + 4);
+    ctx.setLineDash([]);
+    // Corner dots
+    [[bx1,by1],[bx2,by1],[bx1,by2],[bx2,by2]].forEach(([hx,hy]) => {
+      ctx.fillStyle = '#4a9eff';
+      ctx.fillRect(hx - 4, hy - 4, 8, 8);
+    });
+    // Label
+    ctx.fillStyle = '#4a9eff';
+    ctx.font = 'bold 11px Rajdhani, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${S.selectedIndices.size} selected`, bx1, by1 - 6);
+  }
+
+  // ── Marquee rectangle ──
+  if (S.isMarqueeSelecting) {
+    const rx = Math.min(S.marqueeX1, S.marqueeX2);
+    const ry = Math.min(S.marqueeY1, S.marqueeY2);
+    const rw = Math.abs(S.marqueeX2 - S.marqueeX1);
+    const rh = Math.abs(S.marqueeY2 - S.marqueeY1);
+    ctx.fillStyle = 'rgba(74,158,255,0.08)';
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeStyle = '#4a9eff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 3]);
+    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.setLineDash([]);
+  }
+
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// PLAY MODE PHYSICS
+// ════════════════════════════════════════════════════════════════
+const GRAVITY = 900;
+
+function startPlay() {
+  S.playing = true; S.playMode = 'normal';
+  S.score = 0; S.gameOver = false; S.gameWon = false;
+  S.playObjects = S.objects.map(o => ({...o, vx:0, vy:0, onGround:false,
+    patrolStart:o.x, patrolDir:1, alive:true, health:o.health, collected:false}));
+  document.getElementById('btn-play').textContent = '■ Stop';
+  document.getElementById('btn-play').classList.add('active');
+  document.getElementById('play-hint').textContent = 'WASD / Arrows to move · Space to jump · ESC to stop';
+  canvas.style.cursor = 'default';
+  S.lastTime = performance.now();
+  S.animFrame = requestAnimationFrame(playLoop);
+}
+
+function startInfinitePlay() {
+  if (S.selectedIndices.size === 0) {
+    const w = document.getElementById('inf-sel-warning');
+    if (w) w.style.display = '';
+    return;
+  }
+  // Read scroll speed from modal input
+  const spd = parseFloat(document.getElementById('bg-inf-speed').value) || 150;
+  S.infScrollSpeed = spd;
+  closeBgModal();
+  S.playing = true; S.playMode = 'infinite';
+  S.score = 0; S.gameOver = false; S.gameWon = false;
+  S.infScrollX = 0;
+
+  // Only play selected objects
+  const selIdxs = [...S.selectedIndices];
+  S.playObjects = selIdxs.map(i => {
+    const o = S.objects[i];
+    return {...o, vx:0, vy:0, onGround:false, alive:true, health:o.health,
+            collected:false, baseX:o.x, baseY:o.y};
+  });
+
+  // Ensure there's a player; if not, use the whole set but warn in HUD
+  document.getElementById('btn-play').textContent = '■ Stop';
+  document.getElementById('btn-play').classList.add('active');
+  document.getElementById('play-hint').textContent = '∞ Infinite Runner — Space/↑ to jump · ESC to stop';
+  canvas.style.cursor = 'default';
+  S.lastTime = performance.now();
+  S.animFrame = requestAnimationFrame(playLoop);
+}
+
+function stopPlay() {
+  S.playing = false;
+  if (S.animFrame) { cancelAnimationFrame(S.animFrame); S.animFrame = null; }
+  document.getElementById('btn-play').textContent = '▶ Play';
+  document.getElementById('btn-play').classList.remove('active');
+  document.getElementById('play-hint').textContent = 'Drop shapes · Click/drag to select · Drag handles to resize · Shift+Click adds to selection';
+  canvas.style.cursor = 'crosshair';
+  drawEditor();
+}
+
+function togglePlay() {
+  if (S.playing) stopPlay(); else startPlay();
+}
+
+function playLoop(ts) {
+  if (!S.playing) return;
+  const dt = Math.min((ts - S.lastTime) / 1000, 0.05);
+  S.lastTime = ts;
+  if (S.playMode === 'infinite') {
+    updatePlayInfinite(dt);
+    drawPlayInfinite();
+  } else {
+    updatePlay(dt);
+    drawPlay();
+  }
+  S.animFrame = requestAnimationFrame(playLoop);
+}
+
+function aabb(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function updatePlay(dt) {
+  if (S.gameOver || S.gameWon) return;
+  const objs = S.playObjects;
+  const solids = objs.filter(o => o.alive && (o.isPlatform || (o.isSolid && !o.isPlayer && !o.isEnemy)));
+
+  for (let i = 0; i < objs.length; i++) {
+    const o = objs[i];
+    if (!o.alive) continue;
+
+    // ── PLAYER ──
+    if (o.isPlayer) {
+      const left  = S.keys['ArrowLeft']  || S.keys['KeyA'];
+      const right = S.keys['ArrowRight'] || S.keys['KeyD'];
+      const jump  = S.keys['ArrowUp'] || S.keys['KeyW'] || S.keys['Space'];
+
+      if (left)  o.vx = -o.speed;
+      else if (right) o.vx = o.speed;
+      else o.vx *= 0.7;
+
+      if (jump && o.onGround) { o.vy = -o.jumpForce; o.onGround = false; }
+    }
+
+    // ── ENEMY PATROL ──
+    if (o.isEnemy) {
+      o.vx = o.speed * o.patrolDir;
+      if (Math.abs(o.x - o.patrolStart) >= o.patrolDistance) {
+        o.patrolDir *= -1;
+      }
+    }
+
+    // ── GRAVITY ──
+    if (o.affectedByGravity) {
+      o.vy += GRAVITY * dt;
+    }
+
+    // ── MOVE X ──
+    o.x += o.vx * dt;
+    // Collide X
+    for (const s of solids) {
+      if (s === o) continue;
+      if (aabb(o, s)) {
+        if (o.vx > 0) o.x = s.x - o.w;
+        else if (o.vx < 0) o.x = s.x + s.w;
+        o.vx = 0;
+        if (o.isEnemy) o.patrolDir *= -1;
+      }
+    }
+
+    // ── MOVE Y ──
+    o.onGround = false;
+    o.y += o.vy * dt;
+    // Collide Y
+    for (const s of solids) {
+      if (s === o) continue;
+      if (aabb(o, s)) {
+        if (o.vy > 0) { o.y = s.y - o.h; o.onGround = true; }
+        else if (o.vy < 0) o.y = s.y + s.h;
+        o.vy = 0;
+      }
+    }
+
+    // World bounds
+    if (o.x < 0) { o.x = 0; o.vx = 0; if(o.isEnemy) o.patrolDir=1; }
+    if (o.x + o.w > canvas.width) { o.x = canvas.width - o.w; o.vx = 0; if(o.isEnemy) o.patrolDir=-1; }
+    if (o.y + o.h > canvas.height) { o.y = canvas.height - o.h; o.vy = 0; o.onGround = true; }
+    if (o.y < 0) { o.y = 0; o.vy = 0; }
+  }
+
+  // ── INTERACTIONS ──
+  const player = objs.find(o => o.isPlayer && o.alive);
+  if (player) {
+    for (const o of objs) {
+      if (!o.alive || o === player) continue;
+
+      // Enemy hits player
+      if (o.isEnemy && aabb(player, o)) {
+        player.health -= o.damage * dt * 2;
+        if (player.health <= 0) { S.gameOver = true; }
+      }
+      // Spike kills player
+      if (o.isSpike && aabb(player, o)) {
+        S.gameOver = true;
+      }
+      // Coin collection
+      if (o.isCoin && !o.collected && aabb(player, o)) {
+        o.collected = true;
+        o.alive = false;
+        S.score++;
+      }
+    }
+    // Fell off
+    if (player.y > canvas.height + 100) S.gameOver = true;
+
+    // Lava floor damage
+    if (S.bg.lava) {
+      const lh = S.bg.lavaHeight;
+      if (player.y + player.h >= canvas.height - lh) {
+        player.health -= S.bg.lavaDamage * dt;
+        if (player.health <= 0) { player.health = 0; S.gameOver = true; }
+      }
+    }
+  }
+
+  // Check win: all enemies dead
+  const enemies = objs.filter(o => o.isEnemy);
+  if (enemies.length > 0 && enemies.every(e => !e.alive)) S.gameWon = true;
+}
+
+function drawPlay() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background using settings
+  drawBackground(ctx, canvas.width, canvas.height);
+
+  // Lava floor visual
+  if (S.bg.lava) {
+    const lh = S.bg.lavaHeight;
+    const t = performance.now() / 1000;
+    const grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    const shift = (t * 0.3) % 1;
+    grd.addColorStop(Math.max(0, shift - 0.01), '#ff4500');
+    grd.addColorStop(shift, '#ffaa00');
+    grd.addColorStop(Math.min(1, shift + 0.5), '#ff6a00');
+    grd.addColorStop(1, '#ff4500');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, canvas.height - lh, canvas.width, lh);
+    // glow
+    ctx.shadowColor = '#ff4500';
+    ctx.shadowBlur = 18;
+    ctx.fillRect(0, canvas.height - lh, canvas.width, 3);
+    ctx.shadowBlur = 0;
+  }
+
+  for (const o of S.playObjects) {
+    if (!o.alive || o.collected) continue;
+    drawObject(ctx, o, false, true);
+  }
+
+  // HUD
+  ctx.save();
+  ctx.font = 'bold 14px Rajdhani, sans-serif';
+  ctx.fillStyle = '#f4a261';
+  ctx.fillText('Score: ' + S.score, 10, 22);
+
+  if (S.gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#e63946';
+    ctx.font = 'bold 48px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 10);
+    ctx.fillStyle = '#aaa';
+    ctx.font = '18px Rajdhani, sans-serif';
+    ctx.fillText('Press ■ Stop to return to editor', canvas.width/2, canvas.height/2 + 30);
+  }
+  if (S.gameWon) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#2ecc71';
+    ctx.font = 'bold 48px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU WIN!', canvas.width/2, canvas.height/2 - 10);
+    ctx.fillStyle = '#aaa';
+    ctx.font = '18px Rajdhani, sans-serif';
+    ctx.fillText('Score: ' + S.score, canvas.width/2, canvas.height/2 + 30);
+  }
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// MOUSE EVENTS
+// ════════════════════════════════════════════════════════════════
+// INFINITE RUNNER MODE
+// ════════════════════════════════════════════════════════════════
+function updatePlayInfinite(dt) {
+  if (S.gameOver) return;
+  const objs = S.playObjects;
+  const speed = S.infScrollSpeed;
+
+  // Find player
+  const player = objs.find(o => o.isPlayer && o.alive);
+
+  // Move all non-player objects leftward
+  for (const o of objs) {
+    if (!o.alive || o.collected) continue;
+    if (o.isPlayer) continue; // player locked horizontally
+
+    o.x -= speed * dt;
+
+    // Wrap objects that exit the left side back to the right
+    if (o.x + o.w < -80) {
+      // Re-enter from the right, offset by a bit to space things
+      o.x = canvas.width + 40 + Math.random() * 120;
+      // Reset vertical position to original
+      o.y = o.baseY;
+      // Reset collected state for coins
+      if (o.isCoin) { o.collected = false; o.alive = true; }
+    }
+  }
+
+  if (!player) return;
+
+  // Player: only vertical physics, locked horizontally
+  const jumpKey = S.keys['ArrowUp'] || S.keys['KeyW'] || S.keys['Space'];
+  if (jumpKey && player.onGround) { player.vy = -player.jumpForce; player.onGround = false; }
+
+  if (player.affectedByGravity) player.vy += GRAVITY * dt;
+
+  player.onGround = false;
+  player.y += player.vy * dt;
+
+  // Collide player with platforms only (Y axis)
+  const solids = objs.filter(o => o.alive && !o.isPlayer && (o.isPlatform || o.isSolid));
+  for (const s of solids) {
+    if (aabb(player, s)) {
+      if (player.vy > 0) { player.y = s.y - player.h; player.onGround = true; }
+      else if (player.vy < 0) { player.y = s.y + s.h; }
+      player.vy = 0;
+    }
+  }
+
+  // World floor
+  if (player.y + player.h > canvas.height) {
+    player.y = canvas.height - player.h;
+    player.vy = 0; player.onGround = true;
+    if (S.bg.lava) {
+      player.health -= S.bg.lavaDamage * dt;
+      if (player.health <= 0) { player.health = 0; S.gameOver = true; }
+    }
+  }
+  if (player.y < 0) { player.y = 0; player.vy = 0; }
+
+  // Interactions
+  for (const o of objs) {
+    if (!o.alive || o === player) continue;
+    if (o.isEnemy && aabb(player, o)) {
+      player.health -= o.damage * dt * 2;
+      if (player.health <= 0) { player.health = 0; S.gameOver = true; }
+    }
+    if (o.isSpike && aabb(player, o)) S.gameOver = true;
+    if (o.isCoin && !o.collected && aabb(player, o)) {
+      o.collected = true; o.alive = false; S.score++;
+    }
+  }
+
+  // Lava floor
+  if (S.bg.lava) {
+    const lh = S.bg.lavaHeight;
+    if (player.y + player.h >= canvas.height - lh) {
+      player.health -= S.bg.lavaDamage * dt;
+      if (player.health <= 0) { player.health = 0; S.gameOver = true; }
+    }
+  }
+
+  // Distance score (every 100px scrolled = 1 point, plus coins)
+  S.infScrollX += speed * dt;
+}
+
+function drawPlayInfinite() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground(ctx, canvas.width, canvas.height);
+
+  // Lava floor
+  if (S.bg.lava) {
+    const lh = S.bg.lavaHeight;
+    const t = performance.now()/1000;
+    const grd = ctx.createLinearGradient(0,0,canvas.width,0);
+    const sh = (t*0.3)%1;
+    grd.addColorStop(Math.max(0,sh-0.01),'#ff4500');
+    grd.addColorStop(sh,'#ffaa00');
+    grd.addColorStop(Math.min(1,sh+0.5),'#ff6a00');
+    grd.addColorStop(1,'#ff4500');
+    ctx.fillStyle=grd; ctx.fillRect(0,canvas.height-lh,canvas.width,lh);
+    ctx.shadowColor='#ff4500'; ctx.shadowBlur=18;
+    ctx.fillRect(0,canvas.height-lh,canvas.width,3); ctx.shadowBlur=0;
+  }
+
+  for (const o of S.playObjects) {
+    if (!o.alive || o.collected) continue;
+    drawObject(ctx, o, false, true);
+  }
+
+  // HUD
+  ctx.save();
+  const distScore = Math.floor(S.infScrollX / 60);
+  ctx.font = 'bold 14px Rajdhani, sans-serif';
+  ctx.fillStyle = '#f4a261';
+  ctx.fillText(`Score: ${S.score}  Distance: ${distScore}m`, 10, 22);
+
+  // Infinity badge
+  ctx.fillStyle = '#4a9eff';
+  ctx.font = 'bold 12px Rajdhani, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('∞ INFINITE RUNNER', canvas.width - 10, 22);
+  ctx.textAlign = 'left';
+
+  if (S.gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#e63946';
+    ctx.font = 'bold 48px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 14);
+    ctx.fillStyle = '#f4a261';
+    ctx.font = '22px Rajdhani, sans-serif';
+    ctx.fillText(`Score: ${S.score}  Distance: ${Math.floor(S.infScrollX/60)}m`, canvas.width/2, canvas.height/2+24);
+    ctx.fillStyle = '#aaa'; ctx.font='16px Rajdhani,sans-serif';
+    ctx.fillText('Press ■ Stop to return to editor', canvas.width/2, canvas.height/2+56);
+  }
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// ZOOM
+// ════════════════════════════════════════════════════════════════
+function setZoom(z) {
+  S.zoom = Math.max(0.15, Math.min(4, z));
+  const z2 = S.zoom;
+  canvas.style.transform = `scale(${z2})`;
+  // Expand the spacer to match scaled canvas so scrollbars are correct
+  const spacer = document.getElementById('canvas-spacer');
+  spacer.style.width  = (canvas.width  * z2) + 'px';
+  spacer.style.height = (canvas.height * z2) + 'px';
+  document.getElementById('zoom-label').textContent = Math.round(z2 * 100) + '%';
+}
+
+function zoomBy(delta) { setZoom(S.zoom + delta); }
+
+function zoomFit() {
+  const wrap = document.getElementById('canvas-wrap');
+  const availW = wrap.clientWidth  - 60;
+  const availH = wrap.clientHeight - 60;
+  const zw = availW / canvas.width;
+  const zh = availH / canvas.height;
+  setZoom(Math.min(zw, zh));
+}
+
+// Mouse wheel zoom (Ctrl+Wheel or plain wheel on canvas)
+document.getElementById('canvas-wrap').addEventListener('wheel', e => {
+  if (S.playing) return;
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 0.08 : -0.08;
+  zoomBy(delta);
+}, { passive: false });
+
+// ════════════════════════════════════════════════════════════════
+// MOUSE EVENTS
+// ════════════════════════════════════════════════════════════════
+// Convert screen coords to world coords accounting for zoom
+function getCanvasPos(e) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) / S.zoom,
+    y: (e.clientY - r.top)  / S.zoom,
+  };
+}
+
+// Handle radius for resize handles (in world px)
+const HANDLE_R = 7;
+
+function getHandleAt(wx, wy) {
+  // Resize handles only available for single object selection
+  if (S.selectedIndices.size !== 1 || S.selected === null) return null;
+  const o = S.objects[S.selected];
+  if (!o) return null;
+  const mx = o.x + o.w/2, my = o.y + o.h/2;
+  const pts = {
+    nw:[o.x,      o.y      ],
+    ne:[o.x+o.w,  o.y      ],
+    sw:[o.x,      o.y+o.h  ],
+    se:[o.x+o.w,  o.y+o.h  ],
+    n: [mx,       o.y      ],
+    s: [mx,       o.y+o.h  ],
+    w: [o.x,      my       ],
+    e: [o.x+o.w,  my       ],
+  };
+  const r = HANDLE_R / S.zoom;
+  for (const [name, [hx, hy]] of Object.entries(pts)) {
+    if (Math.abs(wx - hx) <= r && Math.abs(wy - hy) <= r) return name;
+  }
+  return null;
+}
+
+function cursorForHandle(h) {
+  const map = {nw:'nw-resize',ne:'ne-resize',sw:'sw-resize',se:'se-resize',
+               n:'n-resize',s:'s-resize',w:'w-resize',e:'e-resize'};
+  return map[h] || 'crosshair';
+}
+
+function hitTest(x, y) {
+  for (let i = S.objects.length - 1; i >= 0; i--) {
+    const o = S.objects[i];
+    if (x >= o.x && x <= o.x+o.w && y >= o.y && y <= o.y+o.h) return i;
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown', e => {
+  if (S.playing) return;
+  if (S.isDraggingFromPanel) return;
+  const {x, y} = getCanvasPos(e);
+
+  // 1. Resize handle — single selection only
+  if (S.selectedIndices.size === 1) {
+    const handle = getHandleAt(x, y);
+    if (handle) {
+      S.isResizing = true; S.resizeHandle = handle;
+      S.resizeStartX = x; S.resizeStartY = y;
+      const o = S.objects[S.selected];
+      S.resizeStartObj = {x:o.x,y:o.y,w:o.w,h:o.h};
+      canvas.style.cursor = cursorForHandle(handle);
+      return;
+    }
+  }
+
+  // 2. Click on an object
+  const idx = hitTest(x, y);
+  if (idx !== null) {
+    if (e.shiftKey) {
+      // Toggle membership
+      if (S.selectedIndices.has(idx)) S.selectedIndices.delete(idx);
+      else S.selectedIndices.add(idx);
+      syncPrimary();
+      updatePropPanel(); updateSelectionBtn(); drawEditor();
+      return;
+    }
+    // If clicking an already-selected object in multi-select → group drag
+    if (S.selectedIndices.has(idx) && S.selectedIndices.size > 1) {
+      S.isDraggingGroup = true;
+      S.dragRefX = x; S.dragRefY = y;
+      S.dragGroupStart = [...S.selectedIndices].map(i => ({idx:i, ox:S.objects[i].x, oy:S.objects[i].y}));
+      canvas.style.cursor = 'move';
+      return;
+    }
+    // Replace selection
+    S.selectedIndices = new Set([idx]);
+    syncPrimary();
+    S.isDraggingOnCanvas = true;
+    S.dragOffX = x - S.objects[idx].x;
+    S.dragOffY = y - S.objects[idx].y;
+    canvas.style.cursor = 'move';
+    updatePropPanel(); updateSelectionBtn(); drawEditor();
+    return;
+  }
+
+  // 3. Click empty space → start marquee (DON'T clear selection yet)
+  S.isMarqueeSelecting = true;
+  S.marqueeX1 = x; S.marqueeY1 = y;
+  S.marqueeX2 = x; S.marqueeY2 = y;
+  canvas.style.cursor = 'crosshair';
+});
+
+document.addEventListener('mousemove', e => {
+  S.mouseX = e.clientX; S.mouseY = e.clientY;
+
+  if (S.isDraggingFromPanel) {
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top  = e.clientY + 'px';
+    return;
+  }
+
+  const {x, y} = getCanvasPos(e);
+
+  // RESIZE
+  if (S.isResizing && S.selected !== null) {
+    const o = S.objects[S.selected], s0 = S.resizeStartObj;
+    const dx = x - S.resizeStartX, dy = y - S.resizeStartY;
+    const MIN = 8, h = S.resizeHandle;
+    let nx=s0.x,ny=s0.y,nw=s0.w,nh=s0.h;
+    if(h.includes('e')){nw=Math.max(MIN,s0.w+dx);}
+    if(h.includes('w')){nw=Math.max(MIN,s0.w-dx);nx=s0.x+s0.w-nw;}
+    if(h.includes('s')){nh=Math.max(MIN,s0.h+dy);}
+    if(h.includes('n')){nh=Math.max(MIN,s0.h-dy);ny=s0.y+s0.h-nh;}
+    nx=Math.max(0,nx); ny=Math.max(0,ny);
+    nw=Math.min(nw,canvas.width-nx); nh=Math.min(nh,canvas.height-ny);
+    o.x=Math.round(nx/4)*4; o.y=Math.round(ny/4)*4;
+    o.w=Math.round(nw/4)*4||MIN; o.h=Math.round(nh/4)*4||MIN;
+    drawEditor(); updatePropPanel();
+    return;
+  }
+
+  // GROUP DRAG
+  if (S.isDraggingGroup) {
+    const dx = x - S.dragRefX, dy = y - S.dragRefY;
+    for (const {idx,ox,oy} of S.dragGroupStart) {
+      const o = S.objects[idx]; if(!o) continue;
+      o.x = Math.max(0, Math.min(Math.round((ox+dx)/8)*8, canvas.width-o.w));
+      o.y = Math.max(0, Math.min(Math.round((oy+dy)/8)*8, canvas.height-o.h));
+    }
+    drawEditor();
+    return;
+  }
+
+  // SINGLE DRAG
+  if (S.isDraggingOnCanvas && S.selected !== null) {
+    const o = S.objects[S.selected];
+    o.x = Math.max(0, Math.min(Math.round((x-S.dragOffX)/8)*8, canvas.width-o.w));
+    o.y = Math.max(0, Math.min(Math.round((y-S.dragOffY)/8)*8, canvas.height-o.h));
+    drawEditor(); updatePropXY();
+    return;
+  }
+
+  // MARQUEE UPDATE
+  if (S.isMarqueeSelecting) {
+    S.marqueeX2 = x; S.marqueeY2 = y;
+    drawEditor();
+    return;
+  }
+
+  // HOVER CURSOR
+  if (!S.playing) {
+    const handle = getHandleAt(x, y);
+    if (handle) canvas.style.cursor = cursorForHandle(handle);
+    else if (hitTest(x,y) !== null) canvas.style.cursor = 'move';
+    else canvas.style.cursor = 'crosshair';
+  }
+
+  // Grid info
+  const r = canvas.getBoundingClientRect();
+  const cx = Math.floor((e.clientX-r.left)/S.zoom);
+  const cy = Math.floor((e.clientY-r.top)/S.zoom);
+  if (cx>=0&&cy>=0&&cx<=canvas.width&&cy<=canvas.height) {
+    document.getElementById('grid-info').textContent=`x:${cx} y:${cy}  ×${Math.round(S.zoom*100)}%`;
+  }
+});
+
+document.addEventListener('mouseup', e => {
+  if (S.isResizing) {
+    S.isResizing=false; S.resizeHandle=null;
+    canvas.style.cursor='crosshair'; updatePropPanel();
+    return;
+  }
+  if (S.isDraggingGroup) {
+    S.isDraggingGroup=false;
+    canvas.style.cursor='crosshair';
+    return;
+  }
+
+  // MARQUEE FINISH
+  if (S.isMarqueeSelecting) {
+    S.isMarqueeSelecting = false;
+    const {x,y} = getCanvasPos(e);
+    S.marqueeX2=x; S.marqueeY2=y;
+    const rx1=Math.min(S.marqueeX1,S.marqueeX2), ry1=Math.min(S.marqueeY1,S.marqueeY2);
+    const rx2=Math.max(S.marqueeX1,S.marqueeX2), ry2=Math.max(S.marqueeY1,S.marqueeY2);
+    if (rx2-rx1>=5 || ry2-ry1>=5) {
+      const newSel = new Set();
+      S.objects.forEach((o,i) => {
+        if (o.x<rx2 && o.x+o.w>rx1 && o.y<ry2 && o.y+o.h>ry1) newSel.add(i);
+      });
+      if (newSel.size > 0) { // only update if something was caught
+        S.selectedIndices = newSel;
+        syncPrimary();
+        updatePropPanel(); updateSelectionBtn();
+      }
+    }
+    canvas.style.cursor='crosshair'; drawEditor();
+    return;
+  }
+
+  if (S.isDraggingFromPanel) {
+    const r = canvas.getBoundingClientRect();
+    const x=(e.clientX-r.left)/S.zoom, y=(e.clientY-r.top)/S.zoom;
+    if (x>=0&&y>=0&&x<=canvas.width&&y<=canvas.height) {
+      const type=S.panelDragType, d=defaultObj(type);
+      const ox=Math.round((x-d.w/2)/8)*8, oy=Math.round((y-d.h/2)/8)*8;
+      const obj=createObj(type, Math.max(0,Math.min(ox,canvas.width-d.w)), Math.max(0,Math.min(oy,canvas.height-d.h)));
+      S.objects.push(obj);
+      const newIdx=S.objects.length-1;
+      S.selectedIndices=new Set([newIdx]);
+      syncPrimary();
+      updatePropPanel(); updateObjCount(); updateSelectionBtn(); drawEditor();
+    }
+    ghost.style.display='none'; S.isDraggingFromPanel=false; S.panelDragType=null;
+  }
+  if (S.isDraggingOnCanvas) { S.isDraggingOnCanvas=false; canvas.style.cursor='crosshair'; }
+});
+
+// ── PANEL DRAG ──
+function startPanelDrag(e, type) {
+  if (S.playing) return;
+  e.preventDefault();
+  S.isDraggingFromPanel = true;
+  S.panelDragType = type;
+  // Draw ghost
+  const d = defaultObj(type);
+  ghost.width = d.w + 10;
+  ghost.height = d.h + 10;
+  gctx.clearRect(0, 0, ghost.width, ghost.height);
+  gctx.globalAlpha = 0.8;
+  gctx.fillStyle = d.color;
+  if (type === 'circle' || type === 'coin') {
+    gctx.beginPath();
+    gctx.arc(ghost.width/2, ghost.height/2, Math.min(d.w,d.h)/2, 0, Math.PI*2);
+    gctx.fill();
+  } else if (type === 'spike') {
+    gctx.beginPath();
+    gctx.moveTo(ghost.width/2, 5);
+    gctx.lineTo(ghost.width-5, ghost.height-5);
+    gctx.lineTo(5, ghost.height-5);
+    gctx.closePath();
+    gctx.fill();
+  } else {
+    gctx.fillRect(5, 5, d.w, d.h);
+  }
+  ghost.style.display = 'block';
+  ghost.style.left = e.clientX + 'px';
+  ghost.style.top = e.clientY + 'px';
+}
+
+// ── KEY EVENTS ──
+document.addEventListener('keydown', e => {
+  S.keys[e.code] = true;
+  if (e.code === 'Escape' && S.playing) stopPlay();
+  if ((e.code === 'Delete' || e.code === 'Backspace') && S.selectedIndices.size > 0 && !S.playing) {
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+    // Sort descending so splices don't shift remaining indices
+    const toDelete = [...S.selectedIndices].sort((a,b) => b-a);
+    toDelete.forEach(i => S.objects.splice(i, 1));
+    S.selectedIndices = new Set();
+    S.selected = null;
+    updatePropPanel(); updateObjCount(); updateSelectionBtn(); drawEditor();
+  }
+});
+document.addEventListener('keyup', e => { S.keys[e.code] = false; });
+
+// ════════════════════════════════════════════════════════════════
+// PROPERTIES PANEL
+// ════════════════════════════════════════════════════════════════
+function updateObjCount() {
+  document.getElementById('obj-count').textContent = S.objects.length;
+}
+
+// Keep S.selected in sync with selectedIndices
+function syncPrimary() {
+  if (S.selectedIndices.size === 1) {
+    S.selected = [...S.selectedIndices][0];
+  } else if (S.selectedIndices.size === 0) {
+    S.selected = null;
+  } else {
+    // Multiple selected: S.selected used only when explicitly set to the "anchor"
+    // Keep it pointing to the last-added for property editing
+    S.selected = null;
+  }
+}
+
+// Clear all selection — only triggered by the X button
+function clearSelection() {
+  S.selectedIndices = new Set();
+  S.selected = null;
+  updatePropPanel(); updateSelectionBtn(); drawEditor();
+}
+
+// Show/hide the Deselect button and sync infinite play button state
+function updateSelectionBtn() {
+  const btn = document.getElementById('btn-clear-sel');
+  const n = S.selectedIndices.size;
+  if (btn) {
+    btn.style.display = n > 0 ? '' : 'none';
+    btn.textContent = `✕ Deselect (${n})`;
+  }
+  // Enable infinite play button only when there's a selection
+  const ibtn = document.getElementById('btn-inf-play');
+  if (ibtn) {
+    ibtn.disabled = (n === 0);
+    const warn = document.getElementById('inf-sel-warning');
+    if (warn) warn.style.display = 'none';
+  }
+}
+
+function updatePropXY() {
+  const xi = document.getElementById('prop-x');
+  const yi = document.getElementById('prop-y');
+  if (xi && S.selected !== null) { xi.value = S.objects[S.selected].x; yi.value = S.objects[S.selected].y; }
+}
+
+function updatePropPanel() {
+  const content = document.getElementById('prop-content');
+  const sl = document.getElementById('sel-label');
+  const n = S.selectedIndices.size;
+
+  // Nothing selected
+  if (n === 0) {
+    content.innerHTML = '<div class="no-select-msg"><b>✦</b>Click an object<br>on the canvas to edit<br>its properties.<br><br>Drag to marquee-select<br>multiple objects.<br>Shift+Click to add.</div>';
+    sl.textContent = '';
+    return;
+  }
+
+  // Multi-selection (no property editing)
+  if (n > 1) {
+    sl.textContent = `${n} objects selected`;
+    content.innerHTML = `
+      <div class="no-select-msg">
+        <b style="font-size:28px">⬡×${n}</b>
+        <span style="display:block;margin-top:6px;color:var(--text2);font-size:12px">
+          ${n} objects selected.<br>Drag any one to move all.<br><br>
+          Click a single object to<br>edit its properties.
+        </span>
+      </div>
+      <button class="del-btn" onclick="deleteSelected()">✕ Delete ${n} Objects</button>
+    `;
+    return;
+  }
+
+  // Single selection
+  if (S.selected === null || S.selected >= S.objects.length) {
+    content.innerHTML = '<div class="no-select-msg"><b>✦</b>Click an object<br>on the canvas to<br>edit its properties.</div>';
+    sl.textContent = '';
+    return;
+  }
+
+  const o = S.objects[S.selected];
+  sl.textContent = '⬡ ' + o.name + ' #' + o.id;
+
+  function row(label, inputHtml) {
+    return `<div class="prop-row"><span class="prop-label">${label}</span>${inputHtml}</div>`;
+  }
+  function numInput(id, val, min, max, step=1) {
+    return `<input id="${id}" class="prop-input" type="number" value="${val}" min="${min}" max="${max}" step="${step}" onchange="setProp('${id}',this.value)">`;
+  }
+  function colorInput(id, val) {
+    return `<input id="${id}" class="prop-input" type="color" value="${val}" oninput="setProp('${id}',this.value)">`;
+  }
+  function checkbox(id, val) {
+    return `<input id="${id}" class="prop-input" type="checkbox" ${val?'checked':''} onchange="setCheck('${id}',this.checked)">`;
+  }
+  function select(id, val, opts) {
+    const os = opts.map(([v,l])=>`<option value="${v}" ${v===val?'selected':''}>${l}</option>`).join('');
+    return `<select id="${id}" class="prop-input" onchange="setProp('${id}',this.value)">${os}</select>`;
+  }
+  function textInput(id, val) {
+    return `<input id="${id}" class="prop-input" type="text" value="${val}" onchange="setProp('${id}',this.value)">`;
+  }
+
+  content.innerHTML = `
+    <div class="prop-section">
+      <div class="prop-section-title">Identity</div>
+      ${row('Name', textInput('name', o.name))}
+      ${row('Shape', select('shape', o.shape, [['rect','Rectangle'],['circle','Circle'],['tri','Triangle']]))}
+      ${row('Color', colorInput('color', o.color))}
+    </div>
+    <div class="prop-section">
+      <div class="prop-section-title">Transform</div>
+      ${row('X', numInput('prop-x', o.x, 0, 760))}
+      ${row('Y', numInput('prop-y', o.y, 0, 470))}
+      ${row('Width', numInput('width', o.w, 4, 800))}
+      ${row('Height', numInput('height', o.h, 4, 500))}
+    </div>
+    <div class="prop-section">
+      <div class="prop-section-title">Behavior</div>
+      ${row('Is Player', checkbox('isPlayer', o.isPlayer))}
+      ${row('Is Enemy', checkbox('isEnemy', o.isEnemy))}
+      ${row('Is Platform', checkbox('isPlatform', o.isPlatform))}
+      ${row('Is Solid', checkbox('isSolid', o.isSolid))}
+      ${row('Is Coin', checkbox('isCoin', o.isCoin))}
+      ${row('Is Spike', checkbox('isSpike', o.isSpike))}
+      ${row('Decorative', checkbox('isDecorative', o.isDecorative))}
+      ${row('Gravity', checkbox('affectedByGravity', o.affectedByGravity))}
+    </div>
+    <div class="prop-section">
+      <div class="prop-section-title">Stats</div>
+      ${row('Health', numInput('health', o.health, 0, 9999))}
+      ${row('Damage', numInput('damage', o.damage, 0, 9999))}
+      ${row('Speed', numInput('speed', o.speed, 0, 1000))}
+      ${row('Jump Force', numInput('jumpForce', o.jumpForce, 0, 2000))}
+      ${row('Patrol Dist', numInput('patrolDistance', o.patrolDistance, 0, 800))}
+    </div>
+    <button class="del-btn" onclick="deleteSelected()">✕ Delete Object</button>
+  `;
+}
+
+// Map prop panel IDs to object fields
+const ID_MAP = {
+  'name':'name','shape':'shape','color':'color',
+  'prop-x':'x','prop-y':'y','width':'w','height':'h',
+  'health':'health','damage':'damage','speed':'speed',
+  'jumpForce':'jumpForce','patrolDistance':'patrolDistance'
+};
+const CHECK_MAP = {
+  'isPlayer':'isPlayer','isEnemy':'isEnemy','isPlatform':'isPlatform',
+  'isSolid':'isSolid','isCoin':'isCoin','isSpike':'isSpike',
+  'isDecorative':'isDecorative','affectedByGravity':'affectedByGravity'
+};
+
+function setProp(id, val) {
+  if (S.selected === null) return;
+  const o = S.objects[S.selected];
+  const field = ID_MAP[id];
+  if (!field) return;
+  if (['x','y','w','h','health','damage','speed','jumpForce','patrolDistance'].includes(field)) {
+    o[field] = parseFloat(val)||0;
+  } else {
+    o[field] = val;
+  }
+  if (field === 'health') o.maxHealth = o.health;
+  drawEditor();
+}
+
+function setCheck(id, val) {
+  if (S.selected === null) return;
+  const o = S.objects[S.selected];
+  const field = CHECK_MAP[id];
+  if (field) { o[field] = val; drawEditor(); }
+}
+
+function deleteSelected() {
+  if (S.selectedIndices.size === 0) return;
+  const toDelete = [...S.selectedIndices].sort((a,b) => b-a);
+  toDelete.forEach(i => S.objects.splice(i, 1));
+  S.selectedIndices = new Set();
+  S.selected = null;
+  updatePropPanel(); updateObjCount(); updateSelectionBtn(); drawEditor();
+}
+
+function clearAll() {
+  if (S.playing) stopPlay();
+  S.objects = [];
+  S.selected = null;
+  S.selectedIndices = new Set();
+  updatePropPanel(); updateObjCount(); updateSelectionBtn(); drawEditor();
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0&&tab==='main')||(i===1&&tab==='script'));
+  });
+  document.getElementById('main-tab').style.display = tab==='main' ? 'flex' : 'none';
+  document.getElementById('main-tab').classList.toggle('active', tab==='main');
+  document.getElementById('script-tab').style.display = tab==='script' ? 'flex' : 'none';
+  document.getElementById('script-tab').classList.toggle('active', tab==='script');
+  document.getElementById('playbar').style.display = tab==='main' ? 'flex' : 'none';
+
+  if (tab === 'script') generateCode();
+}
+
+// ════════════════════════════════════════════════════════════════
+// RIGHT PANEL TOGGLE
+// ════════════════════════════════════════════════════════════════
+function toggleRightPanel() {
+  S.rightOpen = !S.rightOpen;
+  const p = document.getElementById('right-panel');
+  p.classList.toggle('closed', !S.rightOpen);
+  document.getElementById('toggle-arrow').textContent = S.rightOpen ? '▶' : '◀';
+}
+
+// ════════════════════════════════════════════════════════════════
+// CODE GENERATION
+// ════════════════════════════════════════════════════════════════
+function generateCode() {
+  const objs = S.objects;
+  const bg = S.bg;
+  const W = canvas.width, H = canvas.height;
+
+  // ── HTML ──
+  const htmlCode =
+`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas" width="${W}" height="${H}"></canvas>
+    <div id="hud">
+      <span id="hud-score">Score: 0</span>
+      <span id="hud-health">HP: 100</span>
+    </div>
+  </div>
+  <script src="game.js"><\/script>
+</body>
+</html>`;
+
+  // ── CSS ──
+  const cssCode =
+`* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0d0f14;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+#game-container {
+  position: relative;
+}
+
+canvas {
+  display: block;
+  border: 2px solid #f47b20;
+  border-radius: 4px;
+}
+
+#hud {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 20px;
+  color: #f4a261;
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(244,122,32,0.5);
+  pointer-events: none;
+}`;
+
+  // ── JS ──
+  const levelData = JSON.stringify(objs.map(o => ({
+    shape: o.shape,
+    x: o.x, y: o.y,
+    w: o.w, h: o.h,
+    color: o.color,
+    name: o.name,
+    isPlayer: o.isPlayer,
+    isEnemy: o.isEnemy,
+    isPlatform: o.isPlatform,
+    isSolid: o.isSolid,
+    isCoin: o.isCoin,
+    isSpike: o.isSpike,
+    isDecorative: o.isDecorative,
+    affectedByGravity: o.affectedByGravity,
+    health: o.health,
+    damage: o.damage,
+    speed: o.speed,
+    jumpForce: o.jumpForce,
+    patrolDistance: o.patrolDistance,
+  })), null, 2);
+
+  const bgConfig = JSON.stringify({
+    type: bg.type,
+    solidColor: bg.solidColor,
+    colorTop: bg.colorTop,
+    colorBot: bg.colorBot,
+    lava: bg.lava,
+    lavaDamage: bg.lavaDamage,
+    lavaHeight: bg.lavaHeight,
+  });
+
+  const jsCode =
+`// ================================================
+// LEVEL DATA  (generated by PlatformForge)
+// ================================================
+const LEVEL_DATA = ${levelData};
+
+// ── Background & Lava Config ──
+const BG = ${bgConfig};
+
+// ================================================
+// PLATFORMER ENGINE
+// ================================================
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
+const hudScore  = document.getElementById('hud-score');
+const hudHealth = document.getElementById('hud-health');
+
+const GRAVITY    = 900;
+const WORLD_W    = ${W};
+const WORLD_H    = ${H};
+
+let objects  = [];
+let score    = 0;
+let gameOver = false;
+let gameWon  = false;
+let lastTime = 0;
+const keys   = {};
+
+// ── Build object list from level data ──
+function loadLevel() {
+  objects = LEVEL_DATA.map((d, i) => ({
+    ...d,
+    id: i,
+    vx: 0, vy: 0,
+    onGround: false,
+    alive: true,
+    collected: false,
+    maxHealth: d.health,
+    patrolStart: d.x,
+    patrolDir: 1,
+  }));
+}
+
+// ── AABB collision ──
+function aabb(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// ── Physics update ──
+function update(dt) {
+  if (gameOver || gameWon) return;
+
+  const solids = objects.filter(
+    o => o.alive && (o.isPlatform || (o.isSolid && !o.isPlayer && !o.isEnemy))
+  );
+
+  for (const o of objects) {
+    if (!o.alive || o.collected) continue;
+
+    // Player input
+    if (o.isPlayer) {
+      const left  = keys['ArrowLeft']  || keys['KeyA'];
+      const right = keys['ArrowRight'] || keys['KeyD'];
+      const jump  = keys['ArrowUp'] || keys['KeyW'] || keys['Space'];
+      if (left)       o.vx = -o.speed;
+      else if (right) o.vx =  o.speed;
+      else            o.vx *= 0.7;
+      if (jump && o.onGround) { o.vy = -o.jumpForce; o.onGround = false; }
+    }
+
+    // Enemy patrol
+    if (o.isEnemy) {
+      o.vx = o.speed * o.patrolDir;
+      if (Math.abs(o.x - o.patrolStart) >= o.patrolDistance) {
+        o.patrolDir *= -1;
+      }
+    }
+
+    // Gravity
+    if (o.affectedByGravity) o.vy += GRAVITY * dt;
+
+    // Move X + collide
+    o.x += o.vx * dt;
+    for (const s of solids) {
+      if (s === o) continue;
+      if (aabb(o, s)) {
+        if (o.vx > 0) o.x = s.x - o.w;
+        else          o.x = s.x + s.w;
+        o.vx = 0;
+        if (o.isEnemy) o.patrolDir *= -1;
+      }
+    }
+
+    // Move Y + collide
+    o.onGround = false;
+    o.y += o.vy * dt;
+    for (const s of solids) {
+      if (s === o) continue;
+      if (aabb(o, s)) {
+        if (o.vy > 0) { o.y = s.y - o.h; o.onGround = true; }
+        else          o.y = s.y + s.h;
+        o.vy = 0;
+      }
+    }
+
+    // World bounds
+    if (o.x < 0)                { o.x = 0;           o.vx = 0; if (o.isEnemy) o.patrolDir = 1; }
+    if (o.x + o.w > WORLD_W)    { o.x = WORLD_W-o.w; o.vx = 0; if (o.isEnemy) o.patrolDir = -1; }
+    if (o.y + o.h > WORLD_H)    { o.y = WORLD_H-o.h; o.vy = 0; o.onGround = true; }
+    if (o.y < 0)                { o.y = 0;            o.vy = 0; }
+  }
+
+  // Interactions
+  const player = objects.find(o => o.isPlayer && o.alive);
+  if (player) {
+    for (const o of objects) {
+      if (!o.alive || o === player) continue;
+      if (o.isEnemy && aabb(player, o)) {
+        player.health -= o.damage * dt * 2;
+        if (player.health <= 0) { player.health = 0; gameOver = true; }
+      }
+      if (o.isSpike && aabb(player, o)) gameOver = true;
+      if (o.isCoin && !o.collected && aabb(player, o)) {
+        o.collected = true; o.alive = false; score++;
+        hudScore.textContent = 'Score: ' + score;
+      }
+    }
+    hudHealth.textContent = 'HP: ' + Math.max(0, Math.round(player.health));
+    if (player.y > WORLD_H + 100) gameOver = true;
+
+    // Lava floor damage
+    if (BG.lava && player.y + player.h >= WORLD_H - BG.lavaHeight) {
+      player.health -= BG.lavaDamage * dt;
+      if (player.health <= 0) { player.health = 0; gameOver = true; }
+    }
+  }
+
+  const enemies = objects.filter(o => o.isEnemy);
+  if (enemies.length > 0 && enemies.every(e => !e.alive)) gameWon = true;
+}
+
+// ── Background renderer ──
+function drawBackground() {
+  const t = BG.type;
+  if (t === 'solid') {
+    ctx.fillStyle = BG.solidColor;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  } else if (t === 'custom') {
+    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+    g.addColorStop(0, BG.colorTop); g.addColorStop(1, BG.colorBot);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  } else if (t === 'night') {
+    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+    g.addColorStop(0, '#020510'); g.addColorStop(0.6, '#07102a'); g.addColorStop(1, '#0d1533');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    let rng = (function mulberry32(a){ return function(){ a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296; }; })(42);
+    for (let i = 0; i < 80; i++) { ctx.beginPath(); ctx.arc(rng()*WORLD_W, rng()*WORLD_H*0.7, rng()*1.5+0.3, 0, Math.PI*2); ctx.fill(); }
+  } else if (t === 'sunset') {
+    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+    g.addColorStop(0, '#1a0533'); g.addColorStop(0.4, '#7b2d8b'); g.addColorStop(0.65, '#e05c2a');
+    g.addColorStop(0.85, '#f4a261'); g.addColorStop(1, '#2a1a0a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+    g.addColorStop(0, '#0d0f14'); g.addColorStop(1, '#1a1e2a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  }
+}
+
+// ── Render ──
+function draw() {
+  ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+
+  // Background
+  drawBackground();
+
+  // Lava floor
+  if (BG.lava) {
+    const lh = BG.lavaHeight;
+    const t = performance.now() / 1000;
+    const grd = ctx.createLinearGradient(0, 0, WORLD_W, 0);
+    const sh = (t * 0.3) % 1;
+    grd.addColorStop(Math.max(0, sh-0.01), '#ff4500');
+    grd.addColorStop(sh, '#ffaa00');
+    grd.addColorStop(Math.min(1, sh+0.5), '#ff6a00');
+    grd.addColorStop(1, '#ff4500');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, WORLD_H - lh, WORLD_W, lh);
+    ctx.shadowColor = '#ff4500'; ctx.shadowBlur = 18;
+    ctx.fillRect(0, WORLD_H - lh, WORLD_W, 3);
+    ctx.shadowBlur = 0;
+  }
+
+  for (const o of objects) {
+    if (!o.alive || o.collected) continue;
+    ctx.save();
+    ctx.globalAlpha = o.isDecorative ? 0.5 : 1;
+
+    if (o.shape === 'circle') {
+      const r = Math.min(o.w, o.h) / 2;
+      ctx.beginPath();
+      ctx.arc(o.x + o.w/2, o.y + o.h/2, r, 0, Math.PI * 2);
+      ctx.fillStyle = o.color;
+      ctx.fill();
+    } else if (o.shape === 'tri') {
+      ctx.beginPath();
+      ctx.moveTo(o.x + o.w/2, o.y);
+      ctx.lineTo(o.x + o.w, o.y + o.h);
+      ctx.lineTo(o.x, o.y + o.h);
+      ctx.closePath();
+      ctx.fillStyle = o.color;
+      ctx.fill();
+    } else {
+      ctx.fillStyle = o.color;
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.fillRect(o.x, o.y, o.w, 3);
+    }
+
+    // Player health bar
+    if (o.isPlayer && o.maxHealth > 0) {
+      const bw = Math.max(o.w, 40);
+      const bx = o.x + (o.w - bw) / 2;
+      const by = o.y - 10;
+      ctx.fillStyle = '#333';
+      ctx.fillRect(bx, by, bw, 5);
+      ctx.fillStyle = o.health > o.maxHealth * 0.4 ? '#2ecc71' : '#e74c3c';
+      ctx.fillRect(bx, by, bw * (o.health / o.maxHealth), 5);
+    }
+
+    ctx.restore();
+  }
+
+  // Overlays
+  if (gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    ctx.fillStyle = '#e63946';
+    ctx.font = 'bold 56px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', WORLD_W/2, WORLD_H/2);
+    ctx.fillStyle = '#aaa';
+    ctx.font = '20px sans-serif';
+    ctx.fillText('Press R to restart', WORLD_W/2, WORLD_H/2 + 40);
+  }
+
+  if (gameWon) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    ctx.fillStyle = '#2ecc71';
+    ctx.font = 'bold 56px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU WIN!', WORLD_W/2, WORLD_H/2);
+    ctx.fillStyle = '#f4a261';
+    ctx.font = '20px sans-serif';
+    ctx.fillText('Score: ' + score, WORLD_W/2, WORLD_H/2 + 40);
+    ctx.fillStyle = '#aaa';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Press R to restart', WORLD_W/2, WORLD_H/2 + 70);
+  }
+}
+
+// ── Game loop ──
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ── Input ──
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'KeyR') {
+    score = 0; gameOver = false; gameWon = false;
+    hudScore.textContent  = 'Score: 0';
+    hudHealth.textContent = 'HP: 100';
+    loadLevel();
+  }
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) {
+    e.preventDefault();
+  }
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// ── Start ──
+loadLevel();
+requestAnimationFrame(ts => { lastTime = ts; loop(ts); });`;
+
+  // Render into code panes
+  renderCode('code-html', htmlCode);
+  renderCode('code-js', jsCode);
+  renderCode('code-css', cssCode);
+
+  // Store raw text for copy
+  document.getElementById('code-html')._raw = htmlCode;
+  document.getElementById('code-js')._raw = jsCode;
+  document.getElementById('code-css')._raw = cssCode;
+}
+
+function renderCode(elId, code) {
+  const el = document.getElementById(elId);
+  // Simple syntax highlighting
+  let esc = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Comments
+  esc = esc.replace(/(\/\/[^\n]*)/g, '<span class="cmt">$1</span>');
+  // Keywords
+  esc = esc.replace(/\b(const|let|var|function|return|if|else|for|while|of|in|new|true|false|null|undefined|class|this|import|export|default)\b/g,
+    '<span class="kw">$1</span>');
+  // Strings
+  esc = esc.replace(/('[^']*'|"[^"]*"|`[^`]*`)/g, '<span class="str">$1</span>');
+  // Numbers
+  esc = esc.replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+
+  el.innerHTML = esc;
+}
+
+function copyCode(which, btn) {
+  const ids = {html:'code-html', js:'code-js', css:'code-css'};
+  const el = document.getElementById(ids[which]);
+  const text = el._raw || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// BACKGROUND SETTINGS MODAL
+// ════════════════════════════════════════════════════════════════
+function openBgModal() {
+  const bg = S.bg;
+  document.getElementById('bg-world-w').value = canvas.width;
+  document.getElementById('bg-world-h').value = canvas.height;
+  document.getElementById('bg-type').value = bg.type;
+  document.getElementById('bg-solid-color').value = bg.solidColor;
+  document.getElementById('bg-color-top').value = bg.colorTop;
+  document.getElementById('bg-color-bot').value = bg.colorBot;
+  document.getElementById('bg-show-grid').checked = bg.showGrid;
+  document.getElementById('bg-grid-color').value = bg.gridColor;
+  document.getElementById('bg-grid-size').value = bg.gridSize;
+  document.getElementById('bg-lava-dmg').value = bg.lavaDamage;
+  document.getElementById('bg-lava-h').value = bg.lavaHeight;
+  document.getElementById('bg-inf-speed').value = S.infScrollSpeed;
+  const ibtn = document.getElementById('btn-inf-play');
+  if (ibtn) ibtn.disabled = (S.selectedIndices.size === 0);
+  const warn = document.getElementById('inf-sel-warning');
+  if (warn) warn.style.display = 'none';
+  syncLavaBtn();
+  onBgTypeChange();
+  document.getElementById('bg-overlay').classList.add('open');
+}
+
+function closeBgModal() {
+  // Read all settings and apply on close
+  const bg = S.bg;
+  bg.type       = document.getElementById('bg-type').value;
+  bg.solidColor = document.getElementById('bg-solid-color').value;
+  bg.colorTop   = document.getElementById('bg-color-top').value;
+  bg.colorBot   = document.getElementById('bg-color-bot').value;
+  bg.showGrid   = document.getElementById('bg-show-grid').checked;
+  bg.gridColor  = document.getElementById('bg-grid-color').value;
+  bg.gridSize   = parseInt(document.getElementById('bg-grid-size').value) || 40;
+  bg.lavaDamage = parseFloat(document.getElementById('bg-lava-dmg').value) || 25;
+  bg.lavaHeight = parseInt(document.getElementById('bg-lava-h').value) || 20;
+  document.getElementById('bg-overlay').classList.remove('open');
+  if (!S.playing) drawEditor();
+}
+
+function closeBgModalOutside(e) {
+  if (e.target === document.getElementById('bg-overlay')) closeBgModal();
+}
+
+function onBgTypeChange() {
+  const t = document.getElementById('bg-type').value;
+  document.getElementById('row-solid-color').style.display  = (t === 'solid')  ? 'flex' : 'none';
+  document.getElementById('row-custom-grad').style.display  = (t === 'custom') ? 'block': 'none';
+}
+
+function applyWorldSize() {
+  const w = Math.max(200, Math.min(3000, parseInt(document.getElementById('bg-world-w').value)||800));
+  const h = Math.max(200, Math.min(2000, parseInt(document.getElementById('bg-world-h').value)||500));
+  canvas.width  = w;
+  canvas.height = h;
+  document.getElementById('world-size-label').textContent = w + '×' + h;
+  // Clamp existing objects
+  S.objects.forEach(o => {
+    o.x = Math.max(0, Math.min(o.x, w - o.w));
+    o.y = Math.max(0, Math.min(o.y, h - o.h));
+  });
+  setZoom(S.zoom); // refresh spacer size
+  zoomFit();       // auto-fit new world
+  if (!S.playing) drawEditor();
+}
+
+function toggleLava() {
+  S.bg.lava = !S.bg.lava;
+  // Also read current dmg/h inputs in case user changed them
+  S.bg.lavaDamage = parseFloat(document.getElementById('bg-lava-dmg').value) || 25;
+  S.bg.lavaHeight = parseInt(document.getElementById('bg-lava-h').value) || 20;
+  syncLavaBtn();
+  if (!S.playing) drawEditor();
+}
+
+function syncLavaBtn() {
+  const btn = document.getElementById('btn-lava');
+  const rowDmg = document.getElementById('row-lava-dmg');
+  const rowH   = document.getElementById('row-lava-h');
+  if (S.bg.lava) {
+    btn.classList.add('lava-on');
+    btn.querySelector('span').textContent = '🌋 LAVA IS ON — Click to Disable';
+    rowDmg.style.display = 'flex';
+    rowH.style.display   = 'flex';
+  } else {
+    btn.classList.remove('lava-on');
+    btn.querySelector('span').textContent = '🌋 The Floor is Lava';
+    rowDmg.style.display = 'none';
+    rowH.style.display   = 'none';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+// Add a starter ground platform
+S.objects.push(createObj('platform', 0, 468));
+S.objects[0].w = 800; S.objects[0].h = 32;
+S.nextId = 2;
+updateObjCount();
+updateSelectionBtn();
+setZoom(1);
+drawEditor();
+// Make main tab visible
+document.getElementById('main-tab').style.display = 'flex';
+document.getElementById('script-tab').style.display = 'none';
+</script>
+</body>
+</html>
