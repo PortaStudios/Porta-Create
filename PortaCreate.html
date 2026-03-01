@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PortaCreate — Respawn, Score Display & Bullet Range</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep:#060911; --bg-mid:#0c1020; --bg-surface:#111827;
+  --glass-1:rgba(12,18,40,0.82); --glass-2:rgba(16,24,52,0.65);
+  --glass-edge:rgba(120,150,255,0.12); --glass-hi:rgba(255,255,255,0.05);
+  --accent-c:#00e5ff; --accent-v:#8b5cf6; --accent-o:#f59e0b;
+  --accent-r:#ef4444; --accent-g:#10b981;
+  --text-1:#e4e8f4; --text-2:#7d8aaa; --text-3:#3a4060;
+  --border:rgba(100,120,200,0.13); --border-hi:rgba(0,229,255,0.4);
+  --glow-c:rgba(0,229,255,0.15); --glow-v:rgba(139,92,246,0.2);
+  --font:'Outfit',sans-serif; --mono:'DM Mono',monospace;
+  --prop-w:268px; --shape-w:186px; --bar-h:48px; --radius:8px;
+  --trans:all 0.16s cubic-bezier(0.4,0,0.2,1);
+}
+body.theme-light {
+  --bg-deep:#f0f4fa; --bg-mid:#e2e8f0; --bg-surface:#fff;
+  --glass-1:rgba(255,255,255,0.82); --glass-2:rgba(255,255,255,0.6);
+  --glass-hi:rgba(255,255,255,0.9);
+  --accent-c:#0070cc; --accent-v:#6b21a8; --accent-o:#b45309;
+  --accent-r:#b91c1c; --accent-g:#047857;
+  --text-1:#0f172a; --text-2:#334155; --text-3:#94a3b8;
+  --border:rgba(0,0,0,0.08); --border-hi:rgba(0,112,204,0.4);
+  --glow-c:rgba(0,112,204,0.15);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{height:100%;}
+body{font-family:var(--font);background:var(--bg-deep);color:var(--text-1);height:100dvh;overflow:hidden;display:flex;flex-direction:column;user-select:none;transition:background .2s,color .2s;}
+:focus-visible{outline:2px solid var(--accent-c);outline-offset:2px;border-radius:4px;box-shadow:0 0 0 4px var(--glow-c);}
+:focus:not(:focus-visible){outline:none;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--glass-edge);border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,229,255,0.25);}
+
+/* TOPBAR */
+#topbar{height:var(--bar-h);background:var(--glass-1);border-bottom:1px solid var(--border);backdrop-filter:blur(24px);display:flex;align-items:center;overflow:hidden;flex-shrink:0;z-index:10;box-shadow:0 1px 0 var(--glass-hi) inset,0 4px 20px rgba(0,0,0,.4);}
+#logo{padding:0 16px;font-size:14px;font-weight:800;letter-spacing:3px;color:var(--accent-c);text-transform:uppercase;white-space:nowrap;font-family:var(--mono);text-shadow:0 0 20px rgba(0,229,255,.4);}
+#logo em{color:var(--accent-v);font-style:normal;}
+#tabs{display:flex;gap:2px;padding:0 4px;}
+.tab-btn{padding:6px 16px;background:transparent;border:1px solid transparent;border-bottom:none;color:var(--text-2);font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:.5px;cursor:pointer;text-transform:uppercase;transition:var(--trans);border-radius:6px 6px 0 0;}
+.tab-btn:hover{color:var(--text-1);background:var(--glass-hi);}
+.tab-btn.active{background:var(--glass-2);color:var(--accent-c);border-color:var(--border);}
+#playbar{margin-left:auto;padding-right:10px;display:flex;gap:3px;align-items:center;}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;}
+.topbtn{padding:4px 9px;background:var(--glass-2);border:1px solid var(--border);color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px;transition:var(--trans);white-space:nowrap;flex-shrink:0;}
+.topbtn:hover{border-color:var(--border-hi);color:var(--text-1);background:rgba(0,229,255,.06);}
+.topbtn:active{transform:scale(0.96);}
+#btn-play{border-color:rgba(16,185,129,.4);color:var(--accent-g);}
+#btn-play.active{background:rgba(239,68,68,.12);border-color:var(--accent-r);color:var(--accent-r);}
+.topbtn.snap-on{border-color:rgba(245,158,11,.5);color:var(--accent-o);background:rgba(245,158,11,.07);}
+#world-size-label{color:var(--accent-c);font-family:var(--mono);font-size:10px;}
+#pending-badge{display:none;padding:4px 10px;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.5);border-radius:5px;color:var(--accent-v);font-size:10px;font-weight:700;letter-spacing:.5px;animation:pulse-badge 1.5s ease-in-out infinite;white-space:nowrap;}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.75}}
+
+/* MAIN */
+#main-content{flex:1;display:flex;overflow:hidden;}
+#main-tab{flex:1;display:flex;overflow:hidden;}
+
+/* LEFT PANEL */
+#prop-panel{width:var(--prop-w);background:var(--glass-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;backdrop-filter:blur(20px);}
+.panel-title{padding:10px 14px;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--text-2);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--glass-hi);font-family:var(--mono);flex-shrink:0;display:flex;align-items:center;gap:8px;}
+.panel-title span{margin-left:auto;font-size:9px;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:3px;letter-spacing:0;}
+#prop-content{flex:1;overflow-y:auto;padding:12px;}
+.prop-section{margin-bottom:14px;}
+.prop-section-title{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--accent-c);text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);font-family:var(--mono);}
+.prop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;}
+.prop-label{font-size:11px;color:var(--text-2);white-space:nowrap;flex-shrink:0;min-width:80px;font-weight:500;}
+.prop-input{flex:1;background:rgba(6,9,17,.55);border:1px solid var(--border);color:var(--text-1);font-family:var(--mono);font-size:12px;padding:5px 8px;border-radius:5px;outline:none;min-width:0;transition:var(--trans);}
+.prop-input:focus{border-color:var(--accent-c);box-shadow:0 0 0 2px var(--glow-c);}
+.prop-input:hover{border-color:rgba(100,130,200,.3);}
+.prop-input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--accent-c);flex:unset;}
+.prop-input[type=number]{-moz-appearance:textfield;}
+.prop-input[type=color]{padding:2px 4px;height:28px;cursor:pointer;}
+select.prop-input{cursor:pointer;}
+.no-select-msg{color:var(--text-2);font-size:11px;text-align:center;margin-top:28px;line-height:2.2;}
+.no-select-msg b{color:var(--accent-c);display:block;font-size:24px;margin-bottom:8px;}
+.del-btn{width:100%;margin-top:10px;padding:7px;background:transparent;border:1px solid rgba(239,68,68,.35);color:var(--accent-r);font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:5px;transition:var(--trans);}
+.del-btn:hover{background:rgba(239,68,68,.1);border-color:var(--accent-r);}
+.layer-btns{display:flex;gap:4px;margin-top:6px;}
+.layer-btn{flex:1;padding:4px 3px;background:var(--glass-2);border:1px solid var(--border);color:var(--text-2);font-family:var(--font);font-size:10px;cursor:pointer;border-radius:5px;transition:var(--trans);text-align:center;font-weight:600;}
+.layer-btn:hover{border-color:var(--border-hi);color:var(--accent-c);}
+
+/* CANVAS AREA */
+#canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#canvas-toolbar{height:38px;background:var(--glass-1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;backdrop-filter:blur(12px);}
+.tool-label{font-size:10px;color:var(--text-2);letter-spacing:1px;text-transform:uppercase;font-family:var(--mono);}
+#btn-clear-sel{padding:3px 8px;background:transparent;border:1px solid var(--border);color:var(--text-2);font-size:10px;cursor:pointer;border-radius:4px;display:none;transition:var(--trans);font-family:var(--font);}
+#btn-clear-sel:hover{border-color:var(--accent-r);color:var(--accent-r);}
+#play-hint{font-size:10px;color:var(--text-3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.zoom-group{display:flex;align-items:center;gap:3px;margin-left:auto;}
+.zoom-btn{width:26px;height:26px;background:var(--glass-2);border:1px solid var(--border);color:var(--text-1);font-size:14px;cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;transition:var(--trans);font-family:var(--mono);}
+.zoom-btn:hover{border-color:var(--border-hi);}
+#zoom-label{font-family:var(--mono);font-size:11px;color:var(--text-2);min-width:38px;text-align:center;}
+.zoom-fit-btn{padding:4px 8px;background:var(--glass-2);border:1px solid var(--border);color:var(--text-2);font-size:10px;font-weight:600;cursor:pointer;border-radius:5px;transition:var(--trans);font-family:var(--font);}
+.zoom-fit-btn:hover{border-color:var(--border-hi);color:var(--text-1);}
+#canvas-wrap{flex:1;overflow:auto;background:var(--bg-deep);background-image:radial-gradient(circle,rgba(40,50,80,.35) 1px,transparent 1px);background-size:20px 20px;position:relative;}
+#canvas-spacer{position:relative;display:inline-block;margin:28px;}
+#gameCanvas{display:block;cursor:crosshair;transform-origin:top left;box-shadow:0 0 0 1px rgba(0,229,255,.12),0 4px 40px rgba(0,0,0,.6);border-radius:2px;}
+.grid-info{position:fixed;bottom:10px;right:14px;font-family:var(--mono);font-size:9px;color:var(--text-3);pointer-events:none;z-index:10;}
+#lava-indicator{position:absolute;bottom:28px;left:28px;right:28px;pointer-events:none;background:linear-gradient(90deg,#ff4500,#ff8c00,#ff6600,#ff4500);background-size:300% 100%;animation:lava-flow 2s linear infinite;opacity:0;transition:opacity .3s;height:18px;border-radius:0 0 2px 2px;}
+#lava-indicator.active{opacity:.85;}
+@keyframes lava-flow{0%{background-position:0%}100%{background-position:300%}}
+
+/* RIGHT PANEL */
+#right-panel-wrap{position:relative;display:flex;flex-shrink:0;}
+#right-panel{width:var(--shape-w);background:var(--glass-1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;backdrop-filter:blur(20px);}
+#right-panel.closed{width:0;border-left:none;}
+#toggle-right{position:absolute;left:-18px;top:50%;transform:translateY(-50%);width:18px;height:48px;background:var(--glass-1);border:1px solid var(--border);border-right:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-2);border-radius:5px 0 0 5px;backdrop-filter:blur(10px);}
+#shapes-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;}
+.shape-item{background:var(--glass-2);border:1px solid var(--border);border-radius:7px;padding:7px 8px;cursor:grab;transition:var(--trans);user-select:none;-webkit-tap-highlight-color:transparent;}
+.shape-item:hover,.shape-item:focus{border-color:var(--border-hi);background:rgba(0,229,255,.06);outline:none;}
+.shape-item.shape-selected{border-color:var(--accent-v);background:rgba(139,92,246,.1);}
+.shape-preview{height:28px;display:flex;align-items:center;justify-content:center;margin-bottom:3px;pointer-events:none;}
+.s-rect{display:inline-block;background:#4a9eff;border-radius:2px;}
+.s-circle{display:inline-block;border-radius:50%;}
+.shape-name{font-size:10px;font-weight:700;color:var(--text-1);text-transform:uppercase;letter-spacing:.5px;pointer-events:none;}
+.shape-desc{font-size:9px;color:var(--text-3);margin-top:1px;pointer-events:none;}
+.shape-kbd-hint{font-size:8px;color:var(--accent-c);margin-top:2px;font-family:var(--mono);pointer-events:none;}
+
+/* SCRIPT TAB */
+#script-tab{flex:1;display:none;overflow:hidden;}
+#script-tab.active{display:flex;}
+.script-grid{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;gap:1px;background:var(--border);overflow:hidden;}
+.code-pane{background:var(--bg-surface);display:flex;flex-direction:column;overflow:hidden;}
+.code-pane-header{padding:8px 12px;background:var(--glass-2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.code-pane-title{font-size:11px;font-weight:700;color:var(--accent-c);letter-spacing:1px;font-family:var(--mono);}
+.copy-btn{padding:3px 10px;background:transparent;border:1px solid var(--border);color:var(--text-2);font-family:var(--font);font-size:10px;cursor:pointer;border-radius:4px;transition:var(--trans);}
+.copy-btn:hover{border-color:var(--border-hi);color:var(--accent-c);}
+.copy-btn.copied{border-color:var(--accent-g);color:var(--accent-g);}
+.code-area{flex:1;overflow:auto;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre;color:#c8ccd8;}
+.kw{color:#c792ea;}.str{color:#c3e88d;}.num{color:#f78c6c;}.cmt{color:#546e7a;font-style:italic;}
+
+/* BG MODAL (updated with respawn toggle) */
+#bg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+#bg-overlay.open{display:flex;}
+#bg-modal{background:var(--glass-1);border:1px solid var(--border-hi);border-radius:12px;width:390px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.8);backdrop-filter:blur(30px);}
+#bg-modal-header{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0;}
+#bg-modal-header h2{font-size:13px;font-weight:700;color:var(--accent-c);letter-spacing:1px;}
+#bg-modal-close{background:transparent;border:none;color:var(--text-2);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;transition:var(--trans);}
+#bg-modal-close:hover{color:var(--accent-r);}
+#bg-modal-body{flex:1;overflow-y:auto;padding:16px;}
+.bg-section{margin-bottom:18px;}
+.bg-section-title{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--accent-c);text-transform:uppercase;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border);font-family:var(--mono);}
+.bg-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;}
+.bg-label{font-size:12px;color:var(--text-2);flex-shrink:0;min-width:110px;}
+.bg-input{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--text-1);font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:5px;outline:none;transition:var(--trans);}
+.bg-input:focus{border-color:var(--accent-c);box-shadow:0 0 0 2px var(--glow-c);}
+.bg-input[type=color]{padding:2px 4px;height:30px;cursor:pointer;width:64px;flex:unset;}
+.bg-input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--accent-c);flex:unset;}
+.bg-input[type=number]{-moz-appearance:textfield;}
+.apply-btn{width:100%;margin-top:6px;padding:10px;background:linear-gradient(135deg,var(--accent-v),#6d28d9);border:none;color:#fff;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:var(--trans);}
+.apply-btn:hover{opacity:.9;}
+#btn-lava{width:100%;padding:10px;background:transparent;border:2px solid #ff4500;color:#ff6a2f;font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .2s;position:relative;overflow:hidden;}
+#btn-lava::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#ff4500,#ff8c00,#ff4500);background-size:200% 100%;opacity:0;transition:opacity .2s;animation:lava-shimmer 2s linear infinite;}
+@keyframes lava-shimmer{0%{background-position:0%}100%{background-position:200%}}
+#btn-lava:hover::before{opacity:1;}#btn-lava:hover{color:#fff;border-color:#ff8c00;}
+#btn-lava span{position:relative;z-index:1;}
+#btn-lava.lava-on{background:linear-gradient(90deg,#c0392b,#e74c3c,#c0392b);background-size:200% 100%;animation:lava-shimmer 1.5s linear infinite;border-color:#ff4500;color:#fff;box-shadow:0 0 24px rgba(255,69,0,.6);}
+#btn-lava.lava-on::before{opacity:0;}
+
+/* KBD HELP */
+#kbd-help{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#kbd-help.open{display:flex;}
+#kbd-help-box{background:var(--glass-1);border:1px solid var(--border-hi);border-radius:12px;padding:28px 32px;max-width:600px;width:90%;box-shadow:0 30px 80px rgba(0,0,0,.8);backdrop-filter:blur(30px);}
+#kbd-help-box h2{font-size:16px;font-weight:800;color:var(--accent-c);margin-bottom:18px;letter-spacing:1px;}
+.kbd-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;}
+.kbd-row{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);}
+.kbd-keys{display:flex;gap:3px;flex-shrink:0;min-width:120px;flex-wrap:wrap;}
+kbd{display:inline-block;padding:2px 6px;background:rgba(0,0,0,.5);border:1px solid var(--border);border-bottom:2px solid var(--text-3);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--accent-c);white-space:nowrap;}
+.kbd-desc{font-size:11px;color:var(--text-2);}
+.kbd-close-btn{width:100%;margin-top:14px;padding:8px;background:var(--accent-v);border:none;color:#fff;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;border-radius:6px;transition:var(--trans);}
+.kbd-close-btn:hover{opacity:.9;}
+
+/* TUTORIAL MODAL */
+#tutorial-modal{position:fixed;bottom:24px;right:24px;width:340px;background:var(--glass-1);border:2px solid var(--accent-c);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.8);backdrop-filter:blur(20px);z-index:3000;display:none;flex-direction:column;overflow:hidden;}
+#tutorial-modal.active{display:flex;}
+#tutorial-header{padding:12px 16px;background:var(--accent-c);color:#000;font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center;letter-spacing:1px;}
+#tutorial-header button{background:transparent;border:none;color:#000;font-size:16px;cursor:pointer;padding:0 4px;}
+#tutorial-body{padding:16px;color:var(--text-1);}
+#tutorial-step{font-weight:700;color:var(--accent-c);margin-bottom:8px;font-size:12px;}
+#tutorial-desc{font-size:13px;line-height:1.6;margin-bottom:12px;}
+#tutorial-progress{height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin-top:8px;}
+#tutorial-progress-fill{height:100%;width:0%;background:var(--accent-c);border-radius:2px;transition:width .3s;}
+.tutorial-highlight{outline:3px solid var(--accent-c)!important;outline-offset:2px;transition:outline .2s;}
+
+/* TOAST */
+#toast{position:fixed;bottom:44px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--glass-1);border:1px solid var(--border);color:var(--text-1);font-family:var(--font);font-size:12px;padding:9px 20px;border-radius:6px;opacity:0;pointer-events:none;transition:all .25s;z-index:9999;white-space:nowrap;backdrop-filter:blur(20px);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.toast-error{border-color:var(--accent-r);color:var(--accent-r);}
+#toast.toast-ok{border-color:var(--accent-g);color:var(--accent-g);}
+
+/* DRAG GHOST */
+#drag-ghost{position:fixed;pointer-events:none;display:none;z-index:9998;transform:translate(-50%,-50%);border-radius:4px;opacity:.85;}
+
+#aria-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+#file-load-input{display:none;}
+
+@keyframes fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.prop-section{animation:fade-in .15s ease both;}
+.shape-item{animation:fade-in .1s ease both;}
+</style>
+</head>
+<body class="theme-dark">
+<div id="aria-live" aria-live="polite" aria-atomic="true" role="status"></div>
+
+<header id="topbar">
+  <div id="logo">Porta<em>Create</em></div>
+  <nav id="tabs" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" onclick="switchTab('main')">⚙ Editor</button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('script')">{ } Code</button>
+  </nav>
+  <div id="playbar" role="toolbar">
+    <span style="font-size:10px;color:var(--text-2);letter-spacing:1px;white-space:nowrap;font-family:var(--mono)">WORLD: <span id="world-size-label">800×500</span></span>
+    <button class="topbtn" onclick="openBgModal()">🎨 BG</button>
+    <button class="topbtn" onclick="toggleTheme()">🌓</button>
+    <div class="tb-sep"></div>
+    <button class="topbtn" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
+    <button class="topbtn" onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
+    <div class="tb-sep"></div>
+    <button class="topbtn" id="btn-sound" onclick="toggleSound()" aria-pressed="true">🔊</button>
+    <button class="topbtn" id="btn-snap" onclick="toggleSnap()" aria-pressed="false">⊞ Snap</button>
+    <button class="topbtn" onclick="showKbdHelp()" title="Keyboard shortcuts (?)">⌨</button>
+    <button class="topbtn" onclick="startTutorial()" title="Interactive tutorial" id="tutorial-btn">📘 Tutorial</button>
+    <div class="tb-sep"></div>
+    <button class="topbtn" onclick="saveLevel()">💾 Export</button>
+    <button class="topbtn" onclick="document.getElementById('file-load-input').click()">📂 Import</button>
+    <div class="tb-sep"></div>
+    <span id="pending-badge" role="status" aria-live="polite"></span>
+    <button class="topbtn" onclick="clearAll()">✕ Clear</button>
+    <button class="topbtn" id="btn-play" onclick="togglePlay()" aria-pressed="false">▶ Play</button>
+  </div>
+</header>
+<input type="file" id="file-load-input" accept=".json">
+
+<main id="main-content">
+  <div id="main-tab" role="tabpanel">
+    <aside id="prop-panel">
+      <div class="panel-title">◈ PROPERTIES <span>Tab · Shift+Tab</span></div>
+      <div id="prop-content" role="form">
+        <div class="no-select-msg"><b>✦</b>Select an object to edit.<br><span style="font-family:var(--mono);font-size:10px;color:var(--text-3)">Tab · Arrow Keys · Ctrl+Z/Y</span></div>
+      </div>
+    </aside>
+
+    <section id="canvas-area">
+      <div id="canvas-toolbar" role="toolbar">
+        <span class="tool-label">Objects: <span id="obj-count">0</span></span>
+        <span class="tool-label" id="sel-label" style="color:var(--accent-c)"></span>
+        <button id="btn-clear-sel" onclick="clearSelection()">✕ Deselect</button>
+        <span id="play-hint" style="font-size:10px;color:var(--text-3);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Drag shapes · Arrow keys nudge · Shift+↑↓←→ resize</span>
+        <div class="zoom-group">
+          <button class="zoom-btn" onclick="zoomBy(-0.1)">−</button>
+          <span id="zoom-label">100%</span>
+          <button class="zoom-btn" onclick="zoomBy(0.1)">+</button>
+          <button class="zoom-fit-btn" onclick="zoomFit()">Fit</button>
+          <button class="zoom-fit-btn" onclick="setZoom(1)">1:1</button>
+        </div>
+      </div>
+      <div id="canvas-wrap">
+        <div id="canvas-spacer">
+          <canvas id="gameCanvas" width="800" height="500" tabindex="0" role="application"></canvas>
+          <div id="lava-indicator"></div>
+        </div>
+        <div class="grid-info" id="grid-info">x:0 y:0</div>
+      </div>
+    </section>
+
+    <div id="right-panel-wrap">
+      <button id="toggle-right" onclick="toggleRightPanel()" aria-label="Toggle shapes panel" aria-expanded="true"><span id="toggle-arrow">◀</span></button>
+      <aside id="right-panel">
+        <div class="panel-title">◈ SHAPES <span>drag to place</span></div>
+        <div id="shapes-list" role="listbox">
+          <!-- each shape now has both mouse and touch handlers -->
+          <div class="shape-item" tabindex="0" role="option" data-type="platform" 
+               onmousedown="startPanelDrag(event,'platform')" 
+               ontouchstart="touchStartPanel(event,'platform')"
+               onkeydown="shapeItemKey(event,'platform')">
+            <div class="shape-preview"><span class="s-rect" style="width:74px;height:14px;"></span></div>
+            <div class="shape-name">Platform</div><div class="shape-desc">Solid ground tile</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="player" 
+               onmousedown="startPanelDrag(event,'player')" 
+               ontouchstart="touchStartPanel(event,'player')"
+               onkeydown="shapeItemKey(event,'player')">
+            <div class="shape-preview"><span class="s-rect" style="width:28px;height:34px;background:#2ecc71;"></span></div>
+            <div class="shape-name">Player</div><div class="shape-desc">Controllable character</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="enemy" 
+               onmousedown="startPanelDrag(event,'enemy')" 
+               ontouchstart="touchStartPanel(event,'enemy')"
+               onkeydown="shapeItemKey(event,'enemy')">
+            <div class="shape-preview"><span class="s-rect" style="width:28px;height:30px;background:#e63946;"></span></div>
+            <div class="shape-name">Enemy</div><div class="shape-desc">Patrols back &amp; forth</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="movingPlatform" 
+               onmousedown="startPanelDrag(event,'movingPlatform')" 
+               ontouchstart="touchStartPanel(event,'movingPlatform')"
+               onkeydown="shapeItemKey(event,'movingPlatform')">
+            <div class="shape-preview"><span class="s-rect" style="width:68px;height:13px;background:#3a8fd8;position:relative;"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">↔</span></span></div>
+            <div class="shape-name">Moving Platform</div><div class="shape-desc">Oscillates on axis</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="oneWay" 
+               onmousedown="startPanelDrag(event,'oneWay')" 
+               ontouchstart="touchStartPanel(event,'oneWay')"
+               onkeydown="shapeItemKey(event,'oneWay')">
+            <div class="shape-preview"><span class="s-rect" style="width:74px;height:9px;background:#4a9eff;border-top:2px dashed #fff;"></span></div>
+            <div class="shape-name">One-Way</div><div class="shape-desc">Jump through from below</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="spring" 
+               onmousedown="startPanelDrag(event,'spring')" 
+               ontouchstart="touchStartPanel(event,'spring')"
+               onkeydown="shapeItemKey(event,'spring')">
+            <div class="shape-preview"><div style="font-size:20px">🌀</div></div>
+            <div class="shape-name">Spring</div><div class="shape-desc">Launches player upward</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="checkpoint" 
+               onmousedown="startPanelDrag(event,'checkpoint')" 
+               ontouchstart="touchStartPanel(event,'checkpoint')"
+               onkeydown="shapeItemKey(event,'checkpoint')">
+            <div class="shape-preview"><div style="font-size:20px">🚩</div></div>
+            <div class="shape-name">Checkpoint</div><div class="shape-desc">Saves respawn point</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="coin" 
+               onmousedown="startPanelDrag(event,'coin')" 
+               ontouchstart="touchStartPanel(event,'coin')"
+               onkeydown="shapeItemKey(event,'coin')">
+            <div class="shape-preview"><span class="s-circle" style="width:20px;height:20px;background:#ffd700;"></span></div>
+            <div class="shape-name">Coin</div><div class="shape-desc">Collectible item</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="block" 
+               onmousedown="startPanelDrag(event,'block')" 
+               ontouchstart="touchStartPanel(event,'block')"
+               onkeydown="shapeItemKey(event,'block')">
+            <div class="shape-preview"><span class="s-rect" style="width:34px;height:34px;background:#8b6914;border-radius:3px;"></span></div>
+            <div class="shape-name">Block</div><div class="shape-desc">Solid square block</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="spike" 
+               onmousedown="startPanelDrag(event,'spike')" 
+               ontouchstart="touchStartPanel(event,'spike')"
+               onkeydown="shapeItemKey(event,'spike')">
+            <div class="shape-preview"><svg width="32" height="24"><polygon points="16,1 32,23 0,23" fill="#ff4757"/></svg></div>
+            <div class="shape-name">Spike</div><div class="shape-desc">Instant kill on touch</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="circle" 
+               onmousedown="startPanelDrag(event,'circle')" 
+               ontouchstart="touchStartPanel(event,'circle')"
+               onkeydown="shapeItemKey(event,'circle')">
+            <div class="shape-preview"><span class="s-circle" style="width:32px;height:32px;background:#f47b20;"></span></div>
+            <div class="shape-name">Circle</div><div class="shape-desc">Round decoration</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <div class="shape-item" tabindex="0" role="option" data-type="deco" 
+               onmousedown="startPanelDrag(event,'deco')" 
+               ontouchstart="touchStartPanel(event,'deco')"
+               onkeydown="shapeItemKey(event,'deco')">
+            <div class="shape-preview"><span class="s-rect" style="width:46px;height:22px;background:#9b59b6;opacity:.7;"></span></div>
+            <div class="shape-name">Decoration</div><div class="shape-desc">Visual only</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+          <!-- NEW: Score Display shape -->
+          <div class="shape-item" tabindex="0" role="option" data-type="scoreDisplay" 
+               onmousedown="startPanelDrag(event,'scoreDisplay')" 
+               ontouchstart="touchStartPanel(event,'scoreDisplay')"
+               onkeydown="shapeItemKey(event,'scoreDisplay')">
+            <div class="shape-preview"><span class="s-rect" style="width:60px;height:30px;background:#2c3e50;color:#fff;display:flex;align-items:center;justify-content:center;">123</span></div>
+            <div class="shape-name">Score Display</div><div class="shape-desc">Shows current score</div><div class="shape-kbd-hint">Enter → place</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div><!-- end main-tab -->
+
+  <div id="script-tab" role="tabpanel">
+    <div class="script-grid">
+      <div class="code-pane"><div class="code-pane-header"><span class="code-pane-title">.html</span><button class="copy-btn" onclick="copyCode('html',this)">Copy</button></div><div class="code-area" id="code-html" tabindex="0"></div></div>
+      <div class="code-pane"><div class="code-pane-header"><span class="code-pane-title">.js</span><button class="copy-btn" onclick="copyCode('js',this)">Copy</button></div><div class="code-area" id="code-js" tabindex="0"></div></div>
+      <div class="code-pane"><div class="code-pane-header"><span class="code-pane-title">.css</span><button class="copy-btn" onclick="copyCode('css',this)">Copy</button></div><div class="code-area" id="code-css" tabindex="0"></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- BG MODAL (updated with respawn toggle) -->
+<div id="bg-overlay" onclick="closeBgModalOutside(event)" role="dialog" aria-modal="true">
+  <div id="bg-modal">
+    <div id="bg-modal-header">
+      <h2>🎨 Background &amp; World</h2>
+      <button id="bg-modal-close" onclick="closeBgModal()">✕</button>
+    </div>
+    <div id="bg-modal-body">
+      <div class="bg-section">
+        <div class="bg-section-title">World Size</div>
+        <div class="bg-row"><span class="bg-label">Width (px)</span><input id="bg-world-w" class="bg-input" type="number" min="200" max="3000" step="40" value="800"></div>
+        <div class="bg-row"><span class="bg-label">Height (px)</span><input id="bg-world-h" class="bg-input" type="number" min="200" max="2000" step="40" value="500"></div>
+        <button class="apply-btn" onclick="applyWorldSize()">↺ Apply World Size</button>
+      </div>
+      <div class="bg-section">
+        <div class="bg-section-title">Background</div>
+        <div class="bg-row"><span class="bg-label">Style</span>
+          <select id="bg-type" class="bg-input" onchange="onBgTypeChange()">
+            <option value="gradient">Gradient (Sky)</option>
+            <option value="solid">Solid Color</option>
+            <option value="night">Night Sky</option>
+            <option value="sunset">Sunset</option>
+            <option value="custom">Custom Gradient</option>
+          </select>
+        </div>
+        <div class="bg-row" id="row-solid-color" style="display:none"><span class="bg-label">Color</span><input id="bg-solid-color" class="bg-input" type="color" value="#0d0f14"></div>
+        <div id="row-custom-grad">
+          <div class="bg-row"><span class="bg-label">Top Color</span><input id="bg-color-top" class="bg-input" type="color" value="#0d0f14"></div>
+          <div class="bg-row"><span class="bg-label">Bottom Color</span><input id="bg-color-bot" class="bg-input" type="color" value="#1a1e2a"></div>
+        </div>
+      </div>
+      <div class="bg-section">
+        <div class="bg-section-title">Grid</div>
+        <div class="bg-row"><span class="bg-label">Show Grid</span><input id="bg-show-grid" class="bg-input" type="checkbox" checked></div>
+        <div class="bg-row"><span class="bg-label">Grid Color</span><input id="bg-grid-color" class="bg-input" type="color" value="#2a2f3d"></div>
+        <div class="bg-row"><span class="bg-label">Grid Size (px)</span><input id="bg-grid-size" class="bg-input" type="number" min="10" max="120" step="10" value="40"></div>
+      </div>
+      <div class="bg-section">
+        <div class="bg-section-title">☠ Danger Zone</div>
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:12px;line-height:1.6">The bottom of the world becomes lethal lava.</div>
+        <button id="btn-lava" onclick="toggleLava()" aria-pressed="false"><span>🌋 The Floor is Lava</span></button>
+        <div class="bg-row" id="row-lava-dmg" style="margin-top:10px;display:none"><span class="bg-label">Lava Damage/s</span><input id="bg-lava-dmg" class="bg-input" type="number" min="1" max="999" value="25"></div>
+        <div class="bg-row" id="row-lava-h" style="display:none"><span class="bg-label">Lava Height (px)</span><input id="bg-lava-h" class="bg-input" type="number" min="4" max="200" value="20"></div>
+      </div>
+      <!-- NEW: Respawn toggle -->
+      <div class="bg-section">
+        <div class="bg-section-title">Respawn Behaviour</div>
+        <div class="bg-row">
+          <span class="bg-label">Respawn at checkpoint on death</span>
+          <input id="bg-respawn" class="bg-input" type="checkbox" checked>
+        </div>
+        <div style="font-size:11px;color:var(--text-2);line-height:1.6">If checked, player respawns at last checkpoint (if any) instead of showing Game Over.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KBD HELP -->
+<div id="kbd-help" role="dialog" aria-modal="true">
+  <div id="kbd-help-box">
+    <h2>⌨ Keyboard Shortcuts</h2>
+    <div class="kbd-grid">
+      <div class="kbd-row"><div class="kbd-keys"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></div><div class="kbd-desc">Nudge selected object</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd></div><div class="kbd-desc">Undo</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Shift</kbd>+<kbd>↑↓←→</kbd></div><div class="kbd-desc">Resize selected object</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Ctrl</kbd>+<kbd>Y</kbd></div><div class="kbd-desc">Redo</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Tab</kbd></div><div class="kbd-desc">Cycle through objects</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Ctrl</kbd>+<kbd>A</kbd></div><div class="kbd-desc">Select all</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Enter</kbd> / <kbd>Space</kbd></div><div class="kbd-desc">Confirm shape placement</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Ctrl</kbd>+<kbd>C</kbd></div><div class="kbd-desc">Copy selection</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Delete</kbd></div><div class="kbd-desc">Delete selected</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Ctrl</kbd>+<kbd>V</kbd></div><div class="kbd-desc">Paste</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Escape</kbd></div><div class="kbd-desc">Cancel / Deselect</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Ctrl</kbd>+<kbd>D</kbd></div><div class="kbd-desc">Duplicate</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>Space</kbd></div><div class="kbd-desc">Play / Pause (when nothing selected)</div></div>
+      <div class="kbd-row"><div class="kbd-keys"><kbd>?</kbd></div><div class="kbd-desc">This help panel</div></div>
+    </div>
+    <button class="kbd-close-btn" onclick="hideKbdHelp()">Close (Escape)</button>
+  </div>
+</div>
+
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal">
+  <div id="tutorial-header">
+    <span>📘 Tutorial</span>
+    <button onclick="cancelTutorial()" aria-label="Close tutorial">✕</button>
+  </div>
+  <div id="tutorial-body">
+    <div id="tutorial-step">Step 1/6</div>
+    <div id="tutorial-desc">Place a ground platform. Click the "Platform" shape in the right panel, then click on the canvas to place it near the bottom (y ≈ 450).</div>
+    <div id="tutorial-progress"><div id="tutorial-progress-fill" style="width:16%"></div></div>
+  </div>
+</div>
+
+<canvas id="drag-ghost" width="100" height="60" aria-hidden="true"></canvas>
+<div id="toast" role="alert" aria-live="assertive"></div>
+
+<script>
+// ==================== STATE (updated with respawn toggle) ====================
+const S = {
+  objects:[], selected:null, selectedIndices:new Set(), nextId:1,
+  rightOpen:true, playing:false,
+  history:[], historyPos:-1,
+  clipboard:[],
+  snapGrid:8,
+  soundEnabled:true,
+  theme:'dark',
+  panelDragType:null, isDraggingFromPanel:false, isDraggingOnCanvas:false,
+  isDraggingGroup:false, dragGroupStart:[], dragRefX:0, dragRefY:0,
+  isMarqueeSelecting:false, marqueeX1:0, marqueeY1:0, marqueeX2:0, marqueeY2:0,
+  isResizing:false, resizeHandle:null, resizeStartX:0, resizeStartY:0, resizeStartObj:null,
+  dragOffX:0, dragOffY:0, mouseX:0, mouseY:0, zoom:1, keys:{},
+  animFrame:null, editorAnimFrame:null, lastTime:0, playObjects:[], bullets:[], score:0, gameOver:false, gameWon:false,
+  particles:[], checkpointPos:null,
+  camX:0, camY:0, worldW:800, worldH:500,
+  pendingType:null, canvasPlaceX:null, canvasPlaceY:null,
+  _nudgeSnapped:false,
+  bg:{type:'gradient',solidColor:'#0d0f14',colorTop:'#0d0f14',colorBot:'#1a1e2a',
+      showGrid:true,gridColor:'#2a2f3d',gridSize:40,lava:false,lavaDamage:25,lavaHeight:20,
+      respawn: true}, // new respawn toggle
+  // Tutorial state
+  tutorial: {
+    active: false,
+    step: 0,
+    steps: [
+      { desc: "Place a ground platform. Click the 'Platform' shape in the right panel, then click on the canvas to place it near the bottom (y ≈ 450).", 
+        check: () => S.objects.some(o => o.type === 'platform' && o.y > 380) },
+      { desc: "Place a player. Click the 'Player' shape and place it on the platform (so it doesn't fall).", 
+        check: () => S.objects.some(o => o.type === 'player') },
+      { desc: "Move the player to the left side of the platform. Select the player (click it), then use arrow keys or drag it so its x is less than 120.", 
+        check: () => { let p = S.objects.find(o => o.type === 'player'); return p && p.x < 120; } },
+      { desc: "Add a coin above the player. Place a 'Coin' shape near the player (around x=100, y=300).", 
+        check: () => S.objects.some(o => o.type === 'coin') },
+      { desc: "Add an enemy on the right side. Place an 'Enemy' shape on the platform (x > 580).", 
+        check: () => S.objects.some(o => o.type === 'enemy' && o.x > 580) },
+      { desc: "Test your level! Press the Play button (or Space) and move the player with arrow keys to collect the coin. When you collect it, the tutorial will finish.", 
+        check: () => S.score > 0 }
+    ]
+  }
+};
+
+// ==================== CANVAS ====================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const ghost = document.getElementById('drag-ghost');
+const gctx = ghost.getContext('2d');
+
+// ==================== AUDIO ====================
+let _ac = null;
+function getAC(){if(!_ac)_ac=new(window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();return _ac;}
+function playSound(type){
+  if(!S.soundEnabled)return;
+  try{
+    const ac=getAC(),osc=ac.createOscillator(),gain=ac.createGain();
+    osc.connect(gain);gain.connect(ac.destination);
+    const t=ac.currentTime;
+    const map={jump:{f1:300,f2:500,dur:.12,wave:'square',vol:.2},land:{f1:120,f2:80,dur:.08,wave:'sine',vol:.15},coin:{f1:880,f2:1400,dur:.13,wave:'sine',vol:.3},hurt:{f1:200,f2:90,dur:.2,wave:'sawtooth',vol:.25},die:{f1:220,f2:55,dur:.5,wave:'sawtooth',vol:.35},spring:{f1:200,f2:750,dur:.18,wave:'sine',vol:.35},checkpoint:{f1:440,f2:880,dur:.28,wave:'sine',vol:.3},spawn:{f1:330,f2:550,dur:.22,wave:'triangle',vol:.25},place:{f1:440,f2:660,dur:.1,wave:'sine',vol:.15},shoot:{f1:220,f2:330,dur:.08,wave:'square',vol:.1}};
+    const s=map[type]||map.place;
+    osc.type=s.wave;osc.frequency.setValueAtTime(s.f1,t);osc.frequency.exponentialRampToValueAtTime(s.f2,t+s.dur);
+    gain.gain.setValueAtTime(s.vol,t);gain.gain.exponentialRampToValueAtTime(0.001,t+s.dur);
+    osc.start(t);osc.stop(t+s.dur);
+  }catch(e){}
+}
+function toggleSound(){S.soundEnabled=!S.soundEnabled;const b=document.getElementById('btn-sound');b.textContent=S.soundEnabled?'🔊':'🔇';b.setAttribute('aria-pressed',S.soundEnabled);showToast(S.soundEnabled?'Sound ON':'Sound OFF');}
+
+// ==================== HELPERS ====================
+function announce(msg){const el=document.getElementById('aria-live');el.textContent='';requestAnimationFrame(()=>{el.textContent=msg;});}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='show'+(type?' toast-'+type:'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='',2400);}
+function snap(v){return S.snapGrid>1?Math.round(v/S.snapGrid)*S.snapGrid:v;}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+// ==================== OBJECT TEMPLATES (updated with scoreDisplay) ====================
+function defaultObj(type){
+  const B={isPlayer:false,isEnemy:false,isPlatform:false,isSolid:false,affectedByGravity:false,isDecorative:false,isCoin:false,isSpike:false,isMovingPlatform:false,isSpring:false,isCheckpoint:false,oneWay:false,health:999,damage:0,speed:0,jumpForce:0,patrolDistance:0,moveDistance:80,moveSpeed:60,moveAxis:'h',springForce:750,
+    isShooter:false, bulletSpeed:200, bulletDamage:10, fireRate:1, lastShot:0};
+  const defs={
+    platform:      {...B,shape:'rect',w:120,h:24,color:'#4a9eff',isPlatform:true,isSolid:true,name:'Platform'},
+    player:        {...B,shape:'rect',w:32,h:40,color:'#2ecc71',isPlayer:true,isSolid:true,affectedByGravity:true,health:100,damage:10,speed:180,jumpForce:420,name:'Player'},
+    enemy:         {...B,shape:'rect',w:32,h:36,color:'#e63946',isEnemy:true,isSolid:true,affectedByGravity:true,health:50,damage:20,speed:80,patrolDistance:100,name:'Enemy'},
+    movingPlatform:{...B,shape:'rect',w:100,h:20,color:'#3a8fd8',isPlatform:true,isSolid:true,isMovingPlatform:true,name:'MovingPlatform'},
+    oneWay:        {...B,shape:'rect',w:100,h:14,color:'#4a9eff',isPlatform:true,isSolid:true,oneWay:true,name:'OneWayPlatform'},
+    spring:        {...B,shape:'rect',w:28,h:18,color:'#f47b20',isSpring:true,name:'Spring'},
+    checkpoint:    {...B,shape:'rect',w:20,h:48,color:'#2ecc71',isCheckpoint:true,name:'Checkpoint'},
+    coin:          {...B,shape:'circle',w:20,h:20,color:'#ffd700',isCoin:true,health:1,name:'Coin'},
+    block:         {...B,shape:'rect',w:40,h:40,color:'#8b6914',isPlatform:true,isSolid:true,name:'Block'},
+    spike:         {...B,shape:'tri',w:36,h:30,color:'#ff4757',isSpike:true,damage:50,name:'Spike'},
+    circle:        {...B,shape:'circle',w:40,h:40,color:'#f47b20',name:'Circle'},
+    deco:          {...B,shape:'rect',w:60,h:30,color:'#9b59b6',isDecorative:true,health:0,name:'Deco'},
+    scoreDisplay:  {...B,shape:'rect',w:80,h:40,color:'#2c3e50',isDecorative:true,name:'Score Display'}, // new
+  };
+  return defs[type]||defs.platform;
+}
+
+function createObj(type,x,y){
+  const d=defaultObj(type);
+  return{id:S.nextId++,type,x,y,w:d.w,h:d.h,color:d.color,name:d.name,shape:d.shape,
+    isPlayer:d.isPlayer,isEnemy:d.isEnemy,isPlatform:d.isPlatform,isSolid:d.isSolid,
+    affectedByGravity:d.affectedByGravity,isDecorative:d.isDecorative,isCoin:d.isCoin,
+    isSpike:d.isSpike,isMovingPlatform:d.isMovingPlatform,isSpring:d.isSpring,
+    isCheckpoint:d.isCheckpoint,oneWay:d.oneWay,
+    health:d.health,maxHealth:d.health,damage:d.damage,speed:d.speed,jumpForce:d.jumpForce,
+    patrolDistance:d.patrolDistance,moveDistance:d.moveDistance,moveSpeed:d.moveSpeed,
+    moveAxis:d.moveAxis,springForce:d.springForce,movePhase:0,
+    isShooter:d.isShooter, bulletSpeed:d.bulletSpeed, bulletDamage:d.bulletDamage, fireRate:d.fireRate, lastShot:0,
+    vx:0,vy:0,onGround:false,patrolStart:x,patrolDir:1,alive:true};
+}
+
+// ==================== DRAW OBJECT (updated with score display) ====================
+function drawObject(c,obj,selected,isPlay){
+  const{x,y,w,h}=obj;
+  c.save();
+  c.globalAlpha=obj.isDecorative?0.85:1;
+  if(obj.isCheckpoint){
+    c.fillStyle=obj.checkpointActivated?'#2ecc71':'#555';
+    c.fillRect(x+w/2-2,y,4,h);
+    c.fillStyle=obj.checkpointActivated?'#2ecc71':'#888';
+    c.beginPath();c.moveTo(x+w/2+2,y+4);c.lineTo(x+w/2+16,y+12);c.lineTo(x+w/2+2,y+20);c.closePath();c.fill();
+    if(obj.checkpointActivated){c.shadowColor='#2ecc71';c.shadowBlur=14;c.fill();c.shadowBlur=0;}
+  }else if(obj.isSpring){
+    c.fillStyle=obj.color;c.fillRect(x,y+h*.55,w,h*.45);
+    c.strokeStyle=obj.color;c.lineWidth=2.5;c.beginPath();
+    for(let i=0;i<4;i++){const yt=y+(i/4)*h*.55,yn=y+((i+1)/4)*h*.55,xo=(i%2===0)?w*.15:w*.85;if(i===0)c.moveTo(x+w/2,yt);c.lineTo(x+xo,(yt+yn)/2);c.lineTo(x+w/2,yn);}
+    c.stroke();
+    if(selected){c.strokeStyle='#fff';c.lineWidth=1.5;c.strokeRect(x,y,w,h);}
+  }else if(obj.shape==='circle'){
+    const r=Math.min(w,h)/2;
+    c.beginPath();c.arc(x+w/2,y+h/2,r,0,Math.PI*2);
+    c.fillStyle=obj.color;c.fill();
+    if(obj.isCoin){c.beginPath();c.arc(x+w/2-r*.2,y+h/2-r*.2,r*.3,0,Math.PI*2);c.fillStyle='rgba(255,255,255,.5)';c.fill();}
+    if(selected){c.strokeStyle='#fff';c.lineWidth=2;c.stroke();}
+  }else if(obj.shape==='tri'){
+    c.beginPath();c.moveTo(x+w/2,y);c.lineTo(x+w,y+h);c.lineTo(x,y+h);c.closePath();
+    c.fillStyle=obj.color;c.fill();
+    if(selected){c.strokeStyle='#fff';c.lineWidth=2;c.stroke();}
+  }else{
+    c.fillStyle=obj.color;c.fillRect(x,y,w,h);
+    c.fillStyle='rgba(255,255,255,.08)';c.fillRect(x,y,w,3);
+    if(obj.oneWay){c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=2;c.setLineDash([5,5]);c.beginPath();c.moveTo(x,y);c.lineTo(x+w,y);c.stroke();c.setLineDash([]);}
+    if(obj.isMovingPlatform&&!isPlay){c.fillStyle='rgba(255,255,255,.7)';c.font='bold 11px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(obj.moveAxis==='v'?'↕':'↔',x+w/2,y+h/2);}
+    if(selected){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(x+1,y+1,w-2,h-2);}
+  }
+  if(!isPlay&&!obj.isCheckpoint&&!obj.isSpring){
+    c.globalAlpha=1;c.font='bold 10px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='rgba(255,255,255,.75)';
+    let lbl=obj.isPlayer?'▶':obj.isEnemy?'✕':obj.isCoin?'●':obj.isSpike?'▲':obj.isSpring?'⟲':obj.oneWay?'↑':'';
+    if(obj.isEnemy && obj.isShooter) lbl = '🔫';
+    if(obj.type === 'scoreDisplay') lbl = '🏆'; // show trophy icon in editor
+    if(lbl)c.fillText(lbl,x+w/2,y+h/2);
+  }
+  if(isPlay){
+    if(obj.isPlayer && obj.maxHealth>0){
+      const bw=Math.max(w,40),bh=5,bx=x+(w-bw)/2,by=y-10;
+      c.fillStyle='#333';c.fillRect(bx,by,bw,bh);
+      c.fillStyle=obj.health>obj.maxHealth*.4?'#2ecc71':'#e74c3c';
+      c.fillRect(bx,by,bw*(Math.max(0,obj.health)/obj.maxHealth),bh);
+    }
+    if(obj.type === 'scoreDisplay') {
+      c.font='bold 14px sans-serif'; c.fillStyle='#f4a261'; c.textAlign='center'; c.textBaseline='middle';
+      c.fillText(`Score: ${S.score}`, x+w/2, y+h/2);
+    }
+  }
+  c.restore();
+}
+
+// ==================== BACKGROUND ====================
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+function drawBackground(c,w,h,px,py){
+  const bg=S.bg;px=px||0;py=py||0;
+  if(bg.type==='solid'){c.fillStyle=bg.solidColor;c.fillRect(0,0,w,h);}
+  else if(bg.type==='custom'){const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,bg.colorTop);g.addColorStop(1,bg.colorBot);c.fillStyle=g;c.fillRect(0,0,w,h);}
+  else if(bg.type==='night'){
+    const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#020510');g.addColorStop(.6,'#07102a');g.addColorStop(1,'#0d1533');c.fillStyle=g;c.fillRect(0,0,w,h);
+    const rng=mulberry32(42);
+    for(let i=0;i<90;i++){const sx=((rng()*w*2-px*.15)%w+w)%w,sy=((rng()*h*1.5-py*.1)%(h*.85)+h*.85)%h;c.fillStyle=`rgba(255,255,255,${rng()*.5+.2})`;c.beginPath();c.arc(sx,sy,rng()*1.4+.3,0,Math.PI*2);c.fill();}
+    const mx=((w*.75-px*.05)%w+w)%w;c.fillStyle='rgba(220,220,180,.12)';c.beginPath();c.arc(mx,h*.12,28,0,Math.PI*2);c.fill();c.fillStyle='rgba(220,220,180,.18)';c.beginPath();c.arc(mx,h*.12,20,0,Math.PI*2);c.fill();
+  }else if(bg.type==='sunset'){
+    const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1a0533');g.addColorStop(.4,'#7b2d8b');g.addColorStop(.65,'#e05c2a');g.addColorStop(.85,'#f4a261');g.addColorStop(1,'#2a1a0a');c.fillStyle=g;c.fillRect(0,0,w,h);
+  }else{
+    const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#0d0f14');g.addColorStop(1,'#1a1e2a');c.fillStyle=g;c.fillRect(0,0,w,h);
+  }
+}
+
+// ==================== EDITOR DRAW ====================
+function drawEditor(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackground(ctx,canvas.width,canvas.height);
+  if(S.bg.showGrid){
+    const gs=S.bg.gridSize||40;
+    ctx.strokeStyle=S.bg.gridColor+'55';ctx.lineWidth=.5;
+    for(let x=0;x<=canvas.width;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+    for(let y=0;y<=canvas.height;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+  }
+  if(S.bg.lava){
+    const lh=S.bg.lavaHeight;
+    ctx.fillStyle='rgba(255,80,0,.3)';ctx.fillRect(0,canvas.height-lh,canvas.width,lh);
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('🌋 LAVA',canvas.width/2,canvas.height-lh/2);
+  }
+  ctx.strokeStyle='rgba(0,229,255,0.15)';ctx.lineWidth=1;ctx.strokeRect(0,0,canvas.width,canvas.height);
+
+  for(let i=0;i<S.objects.length;i++)drawObject(ctx,S.objects[i],S.selectedIndices.has(i),false);
+
+  // Pending ghost cursor
+  if(S.pendingType&&S.canvasPlaceX!==null){
+    const d=defaultObj(S.pendingType);
+    const gx=snap(S.canvasPlaceX-d.w/2),gy=snap(S.canvasPlaceY-d.h/2);
+    ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle=d.color;
+    if(d.shape==='circle'){ctx.beginPath();ctx.arc(gx+d.w/2,gy+d.h/2,Math.min(d.w,d.h)/2,0,Math.PI*2);ctx.fill();}
+    else if(d.shape==='tri'){ctx.beginPath();ctx.moveTo(gx+d.w/2,gy);ctx.lineTo(gx+d.w,gy+d.h);ctx.lineTo(gx,gy+d.h);ctx.closePath();ctx.fill();}
+    else ctx.fillRect(gx,gy,d.w,d.h);
+    ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    if(d.shape==='circle'){ctx.beginPath();ctx.arc(gx+d.w/2,gy+d.h/2,Math.min(d.w,d.h)/2,0,Math.PI*2);ctx.stroke();}
+    else ctx.strokeRect(gx,gy,d.w,d.h);
+    ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(0,229,255,0.7)';ctx.lineWidth=1;
+    const cx2=gx+d.w/2,cy2=gy+d.h/2;
+    ctx.beginPath();ctx.moveTo(cx2-12,cy2);ctx.lineTo(cx2+12,cy2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx2,cy2-12);ctx.lineTo(cx2,cy2+12);ctx.stroke();
+    ctx.restore();
+  }
+
+  // Selection overlay
+  ctx.save();
+  if(S.selectedIndices.size===1&&S.selected!==null&&S.selected<S.objects.length){
+    const o=S.objects[S.selected];
+    const mx=o.x+o.w/2,my=o.y+o.h/2;
+    ctx.strokeStyle='rgba(0,229,255,0.9)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+    ctx.strokeRect(o.x-.5,o.y-.5,o.w+1,o.h+1);ctx.setLineDash([]);
+    [[o.x,o.y],[o.x+o.w,o.y],[o.x,o.y+o.h],[o.x+o.w,o.y+o.h],[mx,o.y],[mx,o.y+o.h],[o.x,my],[o.x+o.w,my]].forEach(([hx,hy])=>{
+      ctx.fillStyle='rgba(0,229,255,0.9)';ctx.fillRect(hx-4,hy-4,8,8);ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;ctx.strokeRect(hx-4,hy-4,8,8);
+    });
+  }else if(S.selectedIndices.size>1){
+    let bx1=Infinity,by1=Infinity,bx2=-Infinity,by2=-Infinity;
+    S.selectedIndices.forEach(i=>{const o=S.objects[i];if(!o)return;bx1=Math.min(bx1,o.x);by1=Math.min(by1,o.y);bx2=Math.max(bx2,o.x+o.w);by2=Math.max(by2,o.y+o.h);});
+    ctx.strokeStyle='rgba(139,92,246,0.8)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.strokeRect(bx1-2,by1-2,bx2-bx1+4,by2-by1+4);ctx.setLineDash([]);
+    [[bx1,by1],[bx2,by1],[bx1,by2],[bx2,by2]].forEach(([hx,hy])=>{ctx.fillStyle='rgba(139,92,246,0.8)';ctx.fillRect(hx-4,hy-4,8,8);});
+    ctx.fillStyle='rgba(139,92,246,0.9)';ctx.font='bold 11px sans-serif';ctx.textAlign='left';ctx.fillText(`${S.selectedIndices.size} selected`,bx1,by1-6);
+  }
+  if(S.isMarqueeSelecting){
+    const rx=Math.min(S.marqueeX1,S.marqueeX2),ry=Math.min(S.marqueeY1,S.marqueeY2);
+    const rw=Math.abs(S.marqueeX2-S.marqueeX1),rh=Math.abs(S.marqueeY2-S.marqueeY1);
+    ctx.fillStyle='rgba(0,229,255,.05)';ctx.fillRect(rx,ry,rw,rh);
+    ctx.strokeStyle='rgba(0,229,255,.6)';ctx.lineWidth=1;ctx.setLineDash([5,3]);
+    ctx.strokeRect(rx,ry,rw,rh);ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+// ==================== EDITOR LOOP ====================
+function editorLoop(){
+  S.editorAnimFrame=requestAnimationFrame(editorLoop);
+  if(!S.playing)drawEditor();
+}
+
+// ==================== PLAY MODE (with bullets, one-way fix, respawn, bullet range increased) ====================
+const GRAVITY=900;
+
+function startPlay(){
+  if(S.playing)return;
+  S.playing=true;S.score=0;S.gameOver=false;S.gameWon=false;
+  S.particles=[];S.bullets=[]; // reset bullets
+  S.checkpointPos=null;
+  S.worldW=canvas.width;S.worldH=canvas.height;
+  const wrap=document.getElementById('canvas-wrap');
+  const vw=Math.min(S.worldW,Math.max(320,wrap.clientWidth-40));
+  const vh=Math.min(S.worldH,Math.max(240,wrap.clientHeight-40));
+  canvas.width=vw;canvas.height=vh;
+  canvas.style.transform='scale(1)';
+  const sp=document.getElementById('canvas-spacer');
+  sp.style.width=vw+'px';sp.style.height=vh+'px';
+  S.camX=0;S.camY=0;
+  S.playObjects=S.objects.map(o=>({...o,vx:0,vy:0,onGround:false,prevY:o.y,patrolStart:o.x,patrolDir:1,alive:true,collected:false,health:o.health,maxHealth:o.health,movePhase:0,baseMoveX:o.x,baseMoveY:o.y,moveDX:0,moveDY:0,checkpointActivated:false,ridingPlatform:null,lastShot:0}));
+  const btn=document.getElementById('btn-play');btn.textContent='■ Stop';btn.classList.add('active');btn.setAttribute('aria-pressed','true');
+  document.getElementById('play-hint').textContent='WASD / ↑↓←→ move · Space jump · ESC stop';
+  canvas.style.cursor='default';
+  S.lastTime=performance.now();
+  S.animFrame=requestAnimationFrame(playLoop);
+  announce('Play mode started');
+}
+
+function stopPlay(){
+  S.playing=false;
+  if(S.animFrame){cancelAnimationFrame(S.animFrame);S.animFrame=null;}
+  canvas.width=S.worldW;canvas.height=S.worldH;
+  const btn=document.getElementById('btn-play');btn.textContent='▶ Play';btn.classList.remove('active');btn.setAttribute('aria-pressed','false');
+  document.getElementById('play-hint').textContent='Drag shapes · Arrow keys nudge · Shift+↑↓←→ resize';
+  canvas.style.cursor='crosshair';S.particles=[];S.bullets=[];
+  setZoom(S.zoom);drawEditor();
+  announce('Returned to editor');
+}
+
+function togglePlay(){if(S.playing)stopPlay();else startPlay();}
+
+function playLoop(ts){
+  if(!S.playing)return;
+  const dt=Math.min((ts-S.lastTime)/1000,.05);S.lastTime=ts;
+  updatePlay(dt);updateParticles(dt);updateBullets(dt);drawPlay();
+  S.animFrame=requestAnimationFrame(playLoop);
+}
+
+function aabb(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+
+function updatePlay(dt){
+  if(S.gameOver||S.gameWon)return;
+  const objs=S.playObjects;
+
+  // Moving platforms
+  for(const o of objs){
+    if(!o.isMovingPlatform||!o.alive)continue;
+    o.movePhase+=dt*(o.moveSpeed/50);
+    const offset=Math.sin(o.movePhase)*o.moveDistance;
+    if(o.moveAxis==='v'){const ny=o.baseMoveY+offset;o.moveDY=ny-o.y;o.moveDX=0;o.y=ny;}
+    else{const nx=o.baseMoveX+offset;o.moveDX=nx-o.x;o.moveDY=0;o.x=nx;}
+  }
+
+  const solids=objs.filter(o=>o.alive&&(o.isPlatform||(o.isSolid&&!o.isPlayer&&!o.isEnemy)));
+  const player=objs.find(o=>o.isPlayer&&o.alive);
+
+  // Ride moving platform
+  if(player&&player.ridingPlatform&&player.ridingPlatform.alive){player.x+=player.ridingPlatform.moveDX||0;player.y+=player.ridingPlatform.moveDY||0;}
+  if(player)player.ridingPlatform=null;
+
+  for(const o of objs){
+    if(!o.alive)continue;
+    o.prevY=o.y;
+
+    // Player input
+    if(o.isPlayer){
+      const L=S.keys['ArrowLeft']||S.keys['KeyA'];
+      const R=S.keys['ArrowRight']||S.keys['KeyD'];
+      const J=S.keys['ArrowUp']||S.keys['KeyW']||S.keys['Space'];
+      if(L)o.vx=-o.speed;else if(R)o.vx=o.speed;else o.vx*=0.72;
+      if(J&&o.onGround){o.vy=-(o.jumpForce);o.onGround=false;emitParticles(o.x+o.w/2,o.y+o.h,'#fff',5,80,200);playSound('jump');}
+    }
+
+    // Enemy AI: smarter - if shooter, chase player horizontally and shoot
+    if(o.isEnemy){
+      if(o.isShooter && player && player.alive) {
+        // chase horizontally
+        if(player.x < o.x) o.vx = -o.speed;
+        else if(player.x > o.x) o.vx = o.speed;
+        else o.vx *= 0.8;
+        // shoot
+        o.lastShot += dt;
+        if(o.lastShot >= 1/o.fireRate) {
+          o.lastShot = 0;
+          // spawn bullet
+          let dir = (player.x > o.x) ? 1 : -1;
+          S.bullets.push({
+            x: o.x + o.w/2 - 4, y: o.y + o.h/2 - 4,
+            w: 8, h: 8,
+            vx: dir * o.bulletSpeed,
+            vy: 0,
+            damage: o.bulletDamage,
+            color: '#ffaa00',
+            life: 1, lifetime: 4 // increased bullet lifetime (was 2)
+          });
+          playSound('shoot');
+        }
+      } else {
+        // normal patrol
+        o.vx = o.speed * o.patrolDir;
+        if(Math.abs(o.x - o.patrolStart) >= o.patrolDistance) o.patrolDir *= -1;
+      }
+    }
+
+    // Gravity
+    if(o.affectedByGravity)o.vy+=GRAVITY*dt;
+
+    // Horizontal movement + collision
+    o.x+=o.vx*dt;
+    for(const s of solids){
+      if(s===o)continue;
+      if(aabb(o,s)){if(o.vx>0)o.x=s.x-o.w;else if(o.vx<0)o.x=s.x+s.w;o.vx=0;if(o.isEnemy && !o.isShooter)o.patrolDir*=-1;}
+    }
+
+    // Vertical movement + collision (fixed one-way)
+    const wasGround=o.onGround; o.onGround=false;
+    o.y += o.vy * dt;
+    for(const s of solids){
+      if(s===o || !aabb(o,s)) continue;
+      if(s.oneWay){
+        // Only land if moving down and previous bottom was above the platform top
+        if(o.vy > 0 && o.prevY + o.h <= s.y) {
+          o.y = s.y - o.h;
+          o.onGround = true;
+          o.vy = 0;
+          if(o.isPlayer && s.isMovingPlatform) o.ridingPlatform = s;
+          if(o.isPlayer && !wasGround && o.vy > 200) playSound('land');
+        } else if(o.vy < 0) {
+          // moving up, ignore (pass through)
+        }
+      } else {
+        if(o.vy > 0){
+          o.y = s.y - o.h;
+          o.onGround = true;
+          if(o.isPlayer && !wasGround && o.vy > 200) playSound('land');
+          if(o.isPlayer && s.isMovingPlatform) o.ridingPlatform = s;
+        } else if(o.vy < 0){
+          o.y = s.y + s.h;
+        }
+        o.vy = 0;
+      }
+    }
+
+    // World bounds
+    if(o.x<0){o.x=0;o.vx=0;if(o.isEnemy && !o.isShooter)o.patrolDir=1;}
+    if(o.x+o.w>S.worldW){o.x=S.worldW-o.w;o.vx=0;if(o.isEnemy && !o.isShooter)o.patrolDir=-1;}
+    if(o.y+o.h>S.worldH){o.y=S.worldH-o.h;o.vy=0;o.onGround=true;}
+    if(o.y<0){o.y=0;o.vy=0;}
+  }
+
+  // Interactions
+  if(player){
+    for(const o of objs){
+      if(!o.alive||o===player)continue;
+      if(o.isEnemy&&aabb(player,o)){player.health-=o.damage*dt*2;if(player.health<=0){player.health=0;if(S.bg.respawn && S.checkpointPos) { /* respawn handled below */ } else {S.gameOver=true;emitParticles(player.x+player.w/2,player.y+player.h/2,'#e63946',20,220);playSound('die');}} else playSound('hurt');}
+      if(o.isSpike&&aabb(player,o)){player.health=0;if(S.bg.respawn && S.checkpointPos) { /* respawn handled */ } else {S.gameOver=true;emitParticles(player.x+player.w/2,player.y+player.h/2,'#e63946',20,220);playSound('die');}}
+      if(o.isCoin&&!o.collected&&aabb(player,o)){o.collected=true;o.alive=false;S.score++;emitParticles(o.x+o.w/2,o.y+o.h/2,'#ffd700',10,140);playSound('coin'); checkTutorialProgress(); }
+      if(o.isSpring&&player.vy>=0&&aabb(player,o)){if(player.y+player.h>o.y&&player.prevY+player.h<=o.y+8){player.vy=-(o.springForce||750);player.onGround=false;emitParticles(player.x+player.w/2,player.y+player.h,'#f47b20',14,220);playSound('spring');}}
+      if(o.isCheckpoint&&!o.checkpointActivated&&aabb(player,o)){o.checkpointActivated=true;S.checkpointPos={x:o.x+o.w/2-player.w/2,y:o.y-player.h};emitParticles(o.x+o.w/2,o.y,'#2ecc71',16,160);playSound('checkpoint');showToast('Checkpoint! 🚩','ok');}
+    }
+
+    // Lava
+    if(S.bg.lava){const lh=S.bg.lavaHeight;if(player.y+player.h>=S.worldH-lh){player.health-=S.bg.lavaDamage*dt;if(player.health<=0){player.health=0;if(S.bg.respawn && S.checkpointPos) { /* respawn */ } else {S.gameOver=true;playSound('die');}}}}
+
+    // Out of bounds / fall
+    if(player.y>S.worldH+60){
+      if(S.bg.respawn && S.checkpointPos){
+        player.x = S.checkpointPos.x;
+        player.y = S.checkpointPos.y;
+        player.vx = 0; player.vy = 0;
+        player.onGround = false;
+        player.health = Math.max(player.health, player.maxHealth * 0.3);
+        emitParticles(player.x+player.w/2, player.y+player.h, '#2ecc71', 12, 130);
+        playSound('spawn');
+      } else {
+        S.gameOver = true;
+        playSound('die');
+      }
+    }
+
+    // Respawn if health zero and respawn enabled
+    if(player.health <= 0 && !S.gameOver && !S.gameWon) {
+      if(S.bg.respawn && S.checkpointPos) {
+        player.x = S.checkpointPos.x;
+        player.y = S.checkpointPos.y;
+        player.vx = 0; player.vy = 0;
+        player.onGround = false;
+        player.health = player.maxHealth;
+        emitParticles(player.x+player.w/2, player.y+player.h, '#2ecc71', 20, 150);
+        playSound('spawn');
+      } else {
+        S.gameOver = true;
+        playSound('die');
+      }
+    }
+
+    // Camera
+    const vw=canvas.width,vh=canvas.height;
+    const targetCX=player.x+player.w/2-vw/2,targetCY=player.y+player.h/2-vh/2;
+    S.camX+=(targetCX-S.camX)*Math.min(1,dt*8);S.camY+=(targetCY-S.camY)*Math.min(1,dt*8);
+    S.camX=Math.max(0,Math.min(S.camX,Math.max(0,S.worldW-vw)));S.camY=Math.max(0,Math.min(S.camY,Math.max(0,S.worldH-vh)));
+  }
+
+  const enemies=objs.filter(o=>o.isEnemy);
+  if(enemies.length>0&&enemies.every(e=>!e.alive))S.gameWon=true;
+}
+
+// ==================== BULLET UPDATE (increased range) ====================
+function updateBullets(dt){
+  S.bullets = S.bullets.filter(b => {
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+    if(b.life <= 0) return false;
+    // check collision with player
+    const player = S.playObjects.find(o=>o.isPlayer && o.alive);
+    if(player && aabb(b, player)) {
+      player.health -= b.damage;
+      if(player.health <= 0) {
+        player.health = 0;
+        if(!S.bg.respawn || !S.checkpointPos) {
+          S.gameOver = true;
+          emitParticles(player.x+player.w/2, player.y+player.h/2, '#e63946', 20, 220);
+          playSound('die');
+        }
+      } else {
+        playSound('hurt');
+      }
+      return false; // remove bullet
+    }
+    // remove if off screen (increased range: allow further before removal)
+    if(b.x < -200 || b.x > S.worldW+200 || b.y < -200 || b.y > S.worldH+200) return false;
+    return true;
+  });
+}
+
+// ==================== DRAW PLAY (with bullets) ====================
+function emitParticles(x,y,color,count,spd,grav=400){
+  for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=spd*(0.4+Math.random()*0.8);S.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-spd*.3,life:1,decay:1.2+Math.random()*1.2,color,size:2+Math.random()*3,grav});}
+  if(S.particles.length>300)S.particles=S.particles.slice(-300);
+}
+function updateParticles(dt){S.particles=S.particles.filter(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.grav*dt;p.life-=p.decay*dt;return p.life>0;});}
+
+function drawPlay(){
+  const vw=canvas.width,vh=canvas.height,cx=Math.round(S.camX),cy=Math.round(S.camY);
+  ctx.clearRect(0,0,vw,vh);
+  ctx.save();ctx.translate(-Math.round(cx*.25),-Math.round(cy*.15));
+  drawBackground(ctx,vw+Math.abs(cx)+120,vh+Math.abs(cy)+80,cx,cy);ctx.restore();
+  ctx.save();ctx.translate(-cx,-cy);
+  if(S.bg.lava){const lh=S.bg.lavaHeight,t=performance.now()/1000;const grd=ctx.createLinearGradient(cx,0,cx+vw,0);const sh=(t*.3)%1;grd.addColorStop(Math.max(0,sh-.01),'#ff4500');grd.addColorStop(sh,'#ffaa00');grd.addColorStop(Math.min(1,sh+.5),'#ff6a00');grd.addColorStop(1,'#ff4500');ctx.fillStyle=grd;ctx.fillRect(cx,S.worldH-lh,vw,lh);ctx.shadowColor='#ff4500';ctx.shadowBlur=18;ctx.fillRect(cx,S.worldH-lh,vw,3);ctx.shadowBlur=0;}
+  for(const o of S.playObjects){if(!o.alive||o.collected)continue;drawObject(ctx,o,false,true);}
+  // draw bullets
+  ctx.fillStyle = '#ffaa00';
+  for(const b of S.bullets){
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+  }
+  for(const p of S.particles){ctx.save();ctx.globalAlpha=Math.max(0,p.life)*.9;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size*Math.max(0,p.life),0,Math.PI*2);ctx.fill();ctx.restore();}
+  ctx.restore();
+  // HUD (still show top-left score, but score displays are drawn as objects)
+  ctx.save();ctx.font='bold 14px sans-serif';ctx.fillStyle='#f4a261';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('Score: '+S.score,10,8);
+  if(S.checkpointPos){ctx.fillStyle='#2ecc71';ctx.font='12px sans-serif';ctx.fillText('🚩 Checkpoint active',10,26);}
+  const player=S.playObjects.find(o=>o.isPlayer&&o.alive);
+  if(player&&player.maxHealth>0){const bw=120,bh=8,bx=10,by=S.gameOver||S.checkpointPos?46:26;ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle=player.health>player.maxHealth*.4?'#2ecc71':'#ef4444';ctx.fillRect(bx,by,bw*(Math.max(0,player.health)/player.maxHealth),bh);ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);}
+  if(S.gameOver && !S.bg.respawn){ // only show game over if respawn is off
+    ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,0,vw,vh);
+    ctx.fillStyle='#ef4444';ctx.font='bold 52px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('GAME OVER',vw/2,vh/2-14);
+    ctx.fillStyle='#aaa';ctx.font='18px sans-serif';ctx.fillText('Press ■ Stop to return',vw/2,vh/2+24);
+  }
+  if(S.gameWon){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,vw,vh);ctx.fillStyle='#10b981';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('YOU WIN! 🎉',vw/2,vh/2-14);ctx.fillStyle='#f4a261';ctx.font='20px sans-serif';ctx.fillText('Score: '+S.score,vw/2,vh/2+24);}
+  ctx.restore();
+}
+
+// ==================== ZOOM ====================
+function setZoom(z){
+  S.zoom=Math.max(.15,Math.min(4,z));
+  canvas.style.transform=`scale(${S.zoom})`;
+  const sp=document.getElementById('canvas-spacer');
+  sp.style.width=(canvas.width*S.zoom)+'px';sp.style.height=(canvas.height*S.zoom)+'px';
+  document.getElementById('zoom-label').textContent=Math.round(S.zoom*100)+'%';
+}
+function zoomBy(d){setZoom(S.zoom+d);}
+function zoomFit(){const w=document.getElementById('canvas-wrap');setZoom(Math.min((w.clientWidth-60)/canvas.width,(w.clientHeight-60)/canvas.height));}
+document.getElementById('canvas-wrap').addEventListener('wheel',e=>{if(S.playing)return;e.preventDefault();zoomBy(e.deltaY<0?.08:-.08);},{passive:false});
+
+// ==================== MOUSE EVENTS ====================
+function getCanvasPos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/S.zoom,y:(e.clientY-r.top)/S.zoom};}
+const HANDLE_R=7;
+function getHandleAt(wx,wy){
+  if(S.selectedIndices.size!==1||S.selected===null)return null;
+  const o=S.objects[S.selected];if(!o)return null;
+  const mx=o.x+o.w/2,my=o.y+o.h/2;
+  const pts={nw:[o.x,o.y],ne:[o.x+o.w,o.y],sw:[o.x,o.y+o.h],se:[o.x+o.w,o.y+o.h],n:[mx,o.y],s:[mx,o.y+o.h],w:[o.x,my],e:[o.x+o.w,my]};
+  const r=HANDLE_R/S.zoom;
+  for(const[n,[hx,hy]]of Object.entries(pts))if(Math.abs(wx-hx)<=r&&Math.abs(wy-hy)<=r)return n;
+  return null;
+}
+function cursorForHandle(h){return{nw:'nw-resize',ne:'ne-resize',sw:'sw-resize',se:'se-resize',n:'n-resize',s:'s-resize',w:'w-resize',e:'e-resize'}[h]||'crosshair';}
+function hitTest(x,y){for(let i=S.objects.length-1;i>=0;i--){const o=S.objects[i];if(x>=o.x&&x<=o.x+o.w&&y>=o.y&&y<=o.y+o.h)return i;}return null;}
+
+canvas.addEventListener('mousedown',e=>{
+  if(S.playing||S.isDraggingFromPanel)return;
+  if(S.pendingType){const{x,y}=getCanvasPos(e);placeShapeAt(x,y);return;}
+  const{x,y}=getCanvasPos(e);
+  if(S.selectedIndices.size===1){const h=getHandleAt(x,y);if(h){S.isResizing=true;S.resizeHandle=h;S.resizeStartX=x;S.resizeStartY=y;const o=S.objects[S.selected];S.resizeStartObj={x:o.x,y:o.y,w:o.w,h:o.h};canvas.style.cursor=cursorForHandle(h);return;}}
+  const idx=hitTest(x,y);
+  if(idx!==null){
+    if(e.shiftKey){S.selectedIndices.has(idx)?S.selectedIndices.delete(idx):S.selectedIndices.add(idx);syncPrimary();updatePropPanel();updateSelectionBtn();drawEditor();return;}
+    if(S.selectedIndices.has(idx)&&S.selectedIndices.size>1){S.isDraggingGroup=true;S.dragRefX=x;S.dragRefY=y;S.dragGroupStart=[...S.selectedIndices].map(i=>({idx:i,ox:S.objects[i].x,oy:S.objects[i].y}));canvas.style.cursor='move';return;}
+    snapshot();S.selectedIndices=new Set([idx]);syncPrimary();
+    S.isDraggingOnCanvas=true;S.dragOffX=x-S.objects[idx].x;S.dragOffY=y-S.objects[idx].y;
+    canvas.style.cursor='move';updatePropPanel();updateSelectionBtn();drawEditor();return;
+  }
+  S.isMarqueeSelecting=true;S.marqueeX1=x;S.marqueeY1=y;S.marqueeX2=x;S.marqueeY2=y;
+});
+
+document.addEventListener('mousemove',e=>{
+  S.mouseX=e.clientX;S.mouseY=e.clientY;
+  if(S.isDraggingFromPanel){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';return;}
+  if(S.playing)return;
+  const{x,y}=getCanvasPos(e);
+  if(S.pendingType){S.canvasPlaceX=x;S.canvasPlaceY=y;}
+  if(S.isResizing&&S.selected!==null){
+    const o=S.objects[S.selected],s0=S.resizeStartObj;
+    const dx=x-S.resizeStartX,dy=y-S.resizeStartY,MIN=8,h=S.resizeHandle;
+    let nx=s0.x,ny=s0.y,nw=s0.w,nh=s0.h;
+    if(h.includes('e'))nw=Math.max(MIN,s0.w+dx);if(h.includes('w')){nw=Math.max(MIN,s0.w-dx);nx=s0.x+s0.w-nw;}
+    if(h.includes('s'))nh=Math.max(MIN,s0.h+dy);if(h.includes('n')){nh=Math.max(MIN,s0.h-dy);ny=s0.y+s0.h-nh;}
+    nx=Math.max(0,nx);ny=Math.max(0,ny);nw=Math.min(nw,canvas.width-nx);nh=Math.min(nh,canvas.height-ny);
+    o.x=snap(nx);o.y=snap(ny);o.w=Math.max(MIN,snap(nw));o.h=Math.max(MIN,snap(nh));
+    drawEditor();updatePropPanel();return;
+  }
+  if(S.isDraggingGroup){
+    const dx=x-S.dragRefX,dy=y-S.dragRefY;
+    for(const{idx,ox,oy}of S.dragGroupStart){const o=S.objects[idx];if(!o)continue;o.x=Math.max(0,Math.min(snap(ox+dx),canvas.width-o.w));o.y=Math.max(0,Math.min(snap(oy+dy),canvas.height-o.h));}
+    drawEditor();return;
+  }
+  if(S.isDraggingOnCanvas&&S.selected!==null){
+    const o=S.objects[S.selected];
+    o.x=Math.max(0,Math.min(snap(x-S.dragOffX),canvas.width-o.w));
+    o.y=Math.max(0,Math.min(snap(y-S.dragOffY),canvas.height-o.h));
+    drawEditor();updatePropXY();return;
+  }
+  if(S.isMarqueeSelecting){S.marqueeX2=x;S.marqueeY2=y;drawEditor();return;}
+  // Cursor hints
+  const h=getHandleAt(x,y);
+  if(S.pendingType)canvas.style.cursor='copy';
+  else if(h)canvas.style.cursor=cursorForHandle(h);
+  else if(hitTest(x,y)!==null)canvas.style.cursor='move';
+  else canvas.style.cursor='crosshair';
+  const r=canvas.getBoundingClientRect();
+  const cx2=Math.floor((e.clientX-r.left)/S.zoom),cy2=Math.floor((e.clientY-r.top)/S.zoom);
+  if(cx2>=0&&cy2>=0&&cx2<=canvas.width&&cy2<=canvas.height)document.getElementById('grid-info').textContent=`x:${cx2} y:${cy2}  ×${Math.round(S.zoom*100)}%`;
+});
+
+document.addEventListener('mouseup',e=>{
+  if(S.isResizing){S.isResizing=false;S.resizeHandle=null;canvas.style.cursor='crosshair';snapshot();updatePropPanel();return;}
+  if(S.isDraggingGroup){S.isDraggingGroup=false;canvas.style.cursor='crosshair';snapshot();return;}
+  if(S.isMarqueeSelecting){
+    S.isMarqueeSelecting=false;const{x,y}=getCanvasPos(e);S.marqueeX2=x;S.marqueeY2=y;
+    const rx1=Math.min(S.marqueeX1,S.marqueeX2),ry1=Math.min(S.marqueeY1,S.marqueeY2);
+    const rx2=Math.max(S.marqueeX1,S.marqueeX2),ry2=Math.max(S.marqueeY1,S.marqueeY2);
+    if(rx2-rx1>=5||ry2-ry1>=5){
+      const ns=new Set();S.objects.forEach((o,i)=>{if(o.x<rx2&&o.x+o.w>rx1&&o.y<ry2&&o.y+o.h>ry1)ns.add(i);});
+      if(ns.size>0){S.selectedIndices=ns;syncPrimary();updatePropPanel();updateSelectionBtn();}
+    }
+    canvas.style.cursor='crosshair';drawEditor();return;
+  }
+  if(S.isDraggingFromPanel){
+    const r=canvas.getBoundingClientRect();
+    const x=(e.clientX-r.left)/S.zoom,y=(e.clientY-r.top)/S.zoom;
+    if(x>=0&&y>=0&&x<=canvas.width&&y<=canvas.height){
+      const type=S.panelDragType,d=defaultObj(type);
+      const ox=snap(x-d.w/2),oy=snap(y-d.h/2);
+      const obj=createObj(type,Math.max(0,Math.min(ox,canvas.width-d.w)),Math.max(0,Math.min(oy,canvas.height-d.h)));
+      S.objects.push(obj);snapshot();
+      const ni=S.objects.length-1;S.selectedIndices=new Set([ni]);syncPrimary();
+      updatePropPanel();updateObjCount();updateSelectionBtn();drawEditor();
+      playSound('place');announce(`Placed ${type}`);showToast(`Placed ${type}`,'ok');
+      checkTutorialProgress();
+    }
+    ghost.style.display='none';S.isDraggingFromPanel=false;S.panelDragType=null;return;
+  }
+  if(S.isDraggingOnCanvas){S.isDraggingOnCanvas=false;canvas.style.cursor='crosshair';snapshot();checkTutorialProgress();}
+});
+
+// Touch support for canvas
+function touchToMouse(e,type){const t=e.touches[0]||e.changedTouches[0];if(!t)return;const me=new MouseEvent(type,{clientX:t.clientX,clientY:t.clientY,shiftKey:e.shiftKey,bubbles:true});e.target.dispatchEvent(me);}
+canvas.addEventListener('touchstart',e=>{e.preventDefault();touchToMouse(e,'mousedown');},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];if(t){const me=new MouseEvent('mousemove',{clientX:t.clientX,clientY:t.clientY,bubbles:true});document.dispatchEvent(me);}},{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();touchToMouse(e,'mouseup');},{passive:false});
+
+// ==================== PANEL DRAG (mouse and touch) ====================
+function startPanelDrag(e,type){
+  if(S.playing)return; e.preventDefault();
+  S.isDraggingFromPanel=true; S.panelDragType=type;
+  const d=defaultObj(type);
+  const gw=d.w+10,gh=d.h+10; ghost.width=gw; ghost.height=gh;
+  gctx.clearRect(0,0,gw,gh); gctx.globalAlpha=0.85; gctx.fillStyle=d.color;
+  if(d.shape==='circle'||type==='coin'){ gctx.beginPath(); gctx.arc(gw/2,gh/2,Math.min(d.w,d.h)/2,0,Math.PI*2); gctx.fill(); }
+  else if(d.shape==='tri'){ gctx.beginPath(); gctx.moveTo(gw/2,4); gctx.lineTo(gw-4,gh-4); gctx.lineTo(4,gh-4); gctx.closePath(); gctx.fill(); }
+  else{ gctx.fillRect(4,4,d.w,d.h); }
+  ghost.style.display='block'; ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px';
+}
+
+function touchStartPanel(e,type){
+  e.preventDefault();
+  const touch = e.touches[0];
+  if (touch) {
+    startPanelDrag({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: ()=>{} }, type);
+  }
+}
+
+// ==================== KEYBOARD SHAPE PLACEMENT ====================
+function shapeItemKey(e,type){if(e.key==='Enter'||e.key===' '){e.preventDefault();setPendingShape(type);canvas.focus();}}
+function setPendingShape(type){
+  S.pendingType=type;S.canvasPlaceX=canvas.width/2;S.canvasPlaceY=canvas.height/2;
+  const badge=document.getElementById('pending-badge');badge.style.display='inline-block';badge.textContent=`▣ Placing: ${type}`;
+  document.getElementById('play-hint').textContent=`Placing ${type}: Arrow keys to move · Enter to confirm · Esc to cancel`;
+  document.querySelectorAll('.shape-item').forEach(el=>el.classList.toggle('shape-selected',el.dataset.type===type));
+  announce(`Placement mode: ${type}. Use arrow keys to position, Enter to place.`);
+}
+function clearPendingShape(){
+  S.pendingType=null;S.canvasPlaceX=null;S.canvasPlaceY=null;
+  document.getElementById('pending-badge').style.display='none';
+  document.getElementById('play-hint').textContent='Drag shapes · Arrow keys nudge · Shift+↑↓←→ resize';
+  document.querySelectorAll('.shape-item').forEach(el=>el.classList.remove('shape-selected'));
+}
+function placeShapeAt(x,y){
+  const type=S.pendingType;if(!type)return;
+  const d=defaultObj(type);
+  const ox=snap(x-d.w/2),oy=snap(y-d.h/2);
+  const obj=createObj(type,Math.max(0,Math.min(ox,canvas.width-d.w)),Math.max(0,Math.min(oy,canvas.height-d.h)));
+  S.objects.push(obj);snapshot();
+  const ni=S.objects.length-1;S.selectedIndices=new Set([ni]);syncPrimary();
+  updatePropPanel();updateObjCount();updateSelectionBtn();drawEditor();
+  playSound('place');showToast(`Placed ${type}`,'ok');
+  clearPendingShape();
+  checkTutorialProgress();
+}
+
+// ==================== KEYBOARD EVENTS ====================
+document.addEventListener('keydown',e=>{
+  S.keys[e.code]=true;
+  if(e.key==='?'&&!document.activeElement.matches('input,select,textarea')){showKbdHelp();return;}
+  if(e.code==='Escape'){
+    if(document.getElementById('kbd-help').classList.contains('open')){hideKbdHelp();return;}
+    if(document.getElementById('bg-overlay').classList.contains('open')){closeBgModal();return;}
+    if(document.getElementById('tutorial-modal').classList.contains('active')){cancelTutorial();return;}
+    if(S.pendingType){clearPendingShape();return;}
+    if(S.playing){stopPlay();return;}
+    clearSelection();return;
+  }
+  if(S.playing)return;
+
+  const activeEl=document.activeElement;
+  const inInput=activeEl&&(activeEl.tagName==='INPUT'||activeEl.tagName==='SELECT'||activeEl.tagName==='TEXTAREA');
+  const canvasFocused=activeEl===canvas;
+
+  if(canvasFocused&&!inInput){
+    const NUDGE=S.snapGrid>1?S.snapGrid:1;
+    if(S.pendingType&&S.canvasPlaceX!==null){
+      const step=e.shiftKey?16:NUDGE;
+      if(e.code==='ArrowLeft'){e.preventDefault();S.canvasPlaceX=Math.max(0,S.canvasPlaceX-step);}
+      if(e.code==='ArrowRight'){e.preventDefault();S.canvasPlaceX=Math.min(canvas.width,S.canvasPlaceX+step);}
+      if(e.code==='ArrowUp'){e.preventDefault();S.canvasPlaceY=Math.max(0,S.canvasPlaceY-step);}
+      if(e.code==='ArrowDown'){e.preventDefault();S.canvasPlaceY=Math.min(canvas.height,S.canvasPlaceY+step);}
+      if(e.code==='Enter'||e.code==='Space'){e.preventDefault();placeShapeAt(S.canvasPlaceX,S.canvasPlaceY);return;}
+      return;
+    }
+    if(!e.shiftKey&&S.selectedIndices.size>0&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)){
+      e.preventDefault();
+      if(!S._nudgeSnapped){snapshot();S._nudgeSnapped=true;}
+      const dx=e.code==='ArrowLeft'?-NUDGE:e.code==='ArrowRight'?NUDGE:0;
+      const dy=e.code==='ArrowUp'?-NUDGE:e.code==='ArrowDown'?NUDGE:0;
+      S.selectedIndices.forEach(i=>{const o=S.objects[i];if(!o)return;o.x=Math.max(0,Math.min(o.x+dx,canvas.width-o.w));o.y=Math.max(0,Math.min(o.y+dy,canvas.height-o.h));});
+      updatePropXY();drawEditor();checkTutorialProgress();return;
+    }
+    if(e.shiftKey&&S.selectedIndices.size===1&&S.selected!==null&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)){
+      e.preventDefault();
+      if(!S._nudgeSnapped){snapshot();S._nudgeSnapped=true;}
+      const o=S.objects[S.selected];if(!o)return;
+      const MIN=8;
+      if(e.code==='ArrowRight')o.w=Math.min(o.w+NUDGE,canvas.width-o.x);
+      if(e.code==='ArrowLeft')o.w=Math.max(MIN,o.w-NUDGE);
+      if(e.code==='ArrowDown')o.h=Math.min(o.h+NUDGE,canvas.height-o.y);
+      if(e.code==='ArrowUp')o.h=Math.max(MIN,o.h-NUDGE);
+      updatePropPanel();drawEditor();checkTutorialProgress();return;
+    }
+    if(e.code==='Tab'&&S.objects.length>0){
+      e.preventDefault();
+      let idx=S.selected!==null?S.selected:-1;
+      idx=e.shiftKey?(idx-1+S.objects.length)%S.objects.length:(idx+1)%S.objects.length;
+      S.selectedIndices=new Set([idx]);syncPrimary();updatePropPanel();updateSelectionBtn();drawEditor();
+      const o=S.objects[idx];announce(`Object ${idx+1}: ${o.name}`);return;
+    }
+  }
+  document.addEventListener('keyup',e2=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e2.code)&&S._nudgeSnapped){S._nudgeSnapped=false;snapshot();checkTutorialProgress();}},{once:true});
+  if(inInput)return;
+  if(e.code==='Delete'||e.code==='Backspace'){e.preventDefault();deleteSelected();return;}
+  if(e.ctrlKey||e.metaKey){
+    if(e.code==='KeyZ'){e.preventDefault();undo();return;}
+    if(e.code==='KeyY'){e.preventDefault();redo();return;}
+    if(e.code==='KeyA'){e.preventDefault();selectAll();return;}
+    if(e.code==='KeyC'){e.preventDefault();copySelected();return;}
+    if(e.code==='KeyV'){e.preventDefault();pasteClipboard();return;}
+    if(e.code==='KeyD'){e.preventDefault();duplicateSelected();return;}
+  }
+  if(!S.playing&&e.code==='Space'&&S.selectedIndices.size===0){e.preventDefault();togglePlay();}
+});
+document.addEventListener('keyup',e=>{S.keys[e.code]=false;});
+
+// ==================== UNDO / REDO ====================
+function snapshot(){S.history=S.history.slice(0,S.historyPos+1);S.history.push(JSON.parse(JSON.stringify(S.objects)));if(S.history.length>80)S.history.shift();S.historyPos=S.history.length-1;}
+function undo(){if(S.historyPos<=0){showToast('Nothing to undo');return;}S.historyPos--;restoreSnapshot();announce('Undo');}
+function redo(){if(S.historyPos>=S.history.length-1){showToast('Nothing to redo');return;}S.historyPos++;restoreSnapshot();announce('Redo');}
+function restoreSnapshot(){S.objects=JSON.parse(JSON.stringify(S.history[S.historyPos]));S.selected=null;S.selectedIndices=new Set();updatePropPanel();updateObjCount();updateSelectionBtn();drawEditor();}
+
+// ==================== CLIPBOARD ====================
+function copySelected(){if(!S.selectedIndices.size)return;S.clipboard=[...S.selectedIndices].map(i=>JSON.parse(JSON.stringify(S.objects[i])));showToast(`Copied ${S.clipboard.length} object(s)`);}
+function pasteClipboard(){
+  if(!S.clipboard.length){showToast('Clipboard empty');return;}snapshot();
+  const newIdxs=new Set();
+  S.clipboard.forEach(obj=>{const n={...JSON.parse(JSON.stringify(obj)),id:S.nextId++};n.x=Math.min(n.x+24,canvas.width-n.w);n.y=Math.min(n.y+24,canvas.height-n.h);S.objects.push(n);newIdxs.add(S.objects.length-1);});
+  S.selectedIndices=newIdxs;syncPrimary();updatePropPanel();updateObjCount();updateSelectionBtn();drawEditor();showToast(`Pasted ${newIdxs.size} object(s)`);
+}
+function duplicateSelected(){if(!S.selectedIndices.size)return;copySelected();pasteClipboard();}
+function selectAll(){S.selectedIndices=new Set(S.objects.map((_,i)=>i));syncPrimary();updatePropPanel();updateSelectionBtn();drawEditor();announce(`Selected all ${S.objects.length} objects`);}
+
+// ==================== LAYER ORDER ====================
+function bringToFront(){if(S.selected===null)return;snapshot();const obj=S.objects.splice(S.selected,1)[0];S.objects.push(obj);S.selected=S.objects.length-1;S.selectedIndices=new Set([S.selected]);updatePropPanel();drawEditor();}
+function sendToBack(){if(S.selected===null)return;snapshot();const obj=S.objects.splice(S.selected,1)[0];S.objects.unshift(obj);S.selected=0;S.selectedIndices=new Set([0]);updatePropPanel();drawEditor();}
+
+// ==================== SELECTION STATE ====================
+function syncPrimary(){S.selected=S.selectedIndices.size===1?[...S.selectedIndices][0]:null;}
+function clearSelection(){S.selected=null;S.selectedIndices=new Set();updatePropPanel();updateSelectionBtn();drawEditor();}
+function updateObjCount(){document.getElementById('obj-count').textContent=S.objects.length;}
+function updateSelectionBtn(){
+  const sl=document.getElementById('sel-label'),cb=document.getElementById('btn-clear-sel');
+  if(S.selectedIndices.size>0){sl.textContent=S.selectedIndices.size===1&&S.selected!==null?`${S.objects[S.selected]?.name||''}`:`${S.selectedIndices.size} selected`;cb.style.display='block';}
+  else{sl.textContent='';cb.style.display='none';}
+}
+
+// ==================== PROPERTIES PANEL (updated with shooter) ====================
+function updatePropPanel(){
+  const panel=document.getElementById('prop-content');
+  if(S.selected===null||!S.objects[S.selected]){
+    panel.innerHTML='<div class="no-select-msg"><b>✦</b>Select an object to edit.<br><span style="font-family:var(--mono);font-size:10px;color:var(--text-3)">Tab · Arrow Keys · Ctrl+Z/Y</span></div>';
+    return;
+  }
+  const o=S.objects[S.selected];
+  let h=`
+  <div class="prop-section">
+    <div class="prop-section-title">${escHtml(o.type||'Object').toUpperCase()} — #${o.id}</div>
+    <div class="prop-row"><span class="prop-label">Name</span><input class="prop-input" id="prop-name" value="${escHtml(o.name||'')}" onchange="setProp('name',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Color</span><input type="color" class="prop-input" id="prop-color" value="${o.color||'#4a9eff'}" oninput="setPropColor(this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Shape</span>
+      <select class="prop-input" id="shape" onchange="setProp('shape',this.value)">
+        <option value="rect"${o.shape==='rect'?' selected':''}>Rectangle</option>
+        <option value="circle"${o.shape==='circle'?' selected':''}>Circle</option>
+        <option value="tri"${o.shape==='tri'?' selected':''}>Triangle</option>
+      </select>
+    </div>
+  </div>
+  <div class="prop-section">
+    <div class="prop-section-title">Transform</div>
+    <div class="prop-row"><span class="prop-label">X</span><input type="number" class="prop-input" id="prop-x" value="${Math.round(o.x)}" onchange="setProp('prop-x',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Y</span><input type="number" class="prop-input" id="prop-y" value="${Math.round(o.y)}" onchange="setProp('prop-y',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Width</span><input type="number" class="prop-input" id="width" value="${Math.round(o.w)}" min="4" onchange="setProp('width',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Height</span><input type="number" class="prop-input" id="height" value="${Math.round(o.h)}" min="4" onchange="setProp('height',this.value)"></div>
+  </div>
+  <div class="prop-section">
+    <div class="prop-section-title">Behaviour</div>
+    <div class="prop-row"><span class="prop-label">Is Player</span><input type="checkbox" class="prop-input" id="isPlayer" ${o.isPlayer?'checked':''} onchange="setCheck('isPlayer',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Is Enemy</span><input type="checkbox" class="prop-input" id="isEnemy" ${o.isEnemy?'checked':''} onchange="setCheck('isEnemy',this.checked)"></div>`;
+  
+  // Shooter checkbox (only if enemy)
+  if(o.isEnemy) {
+    h += `<div class="prop-row"><span class="prop-label">Shooter</span><input type="checkbox" class="prop-input" id="isShooter" ${o.isShooter?'checked':''} onchange="setCheck('isShooter',this.checked)"></div>`;
+  }
+  
+  h += `
+    <div class="prop-row"><span class="prop-label">Is Platform</span><input type="checkbox" class="prop-input" id="isPlatform" ${o.isPlatform?'checked':''} onchange="setCheck('isPlatform',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Is Solid</span><input type="checkbox" class="prop-input" id="isSolid" ${o.isSolid?'checked':''} onchange="setCheck('isSolid',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">One-Way</span><input type="checkbox" class="prop-input" id="oneWay" ${o.oneWay?'checked':''} onchange="setCheck('oneWay',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Moving Platform</span><input type="checkbox" class="prop-input" id="isMovingPlatform" ${o.isMovingPlatform?'checked':''} onchange="setCheck('isMovingPlatform',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Gravity</span><input type="checkbox" class="prop-input" id="affectedByGravity" ${o.affectedByGravity?'checked':''} onchange="setCheck('affectedByGravity',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Is Coin</span><input type="checkbox" class="prop-input" id="isCoin" ${o.isCoin?'checked':''} onchange="setCheck('isCoin',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Is Spike</span><input type="checkbox" class="prop-input" id="isSpike" ${o.isSpike?'checked':''} onchange="setCheck('isSpike',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Is Spring</span><input type="checkbox" class="prop-input" id="isSpring" ${o.isSpring?'checked':''} onchange="setCheck('isSpring',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Checkpoint</span><input type="checkbox" class="prop-input" id="isCheckpoint" ${o.isCheckpoint?'checked':''} onchange="setCheck('isCheckpoint',this.checked)"></div>
+    <div class="prop-row"><span class="prop-label">Decorative</span><input type="checkbox" class="prop-input" id="isDecorative" ${o.isDecorative?'checked':''} onchange="setCheck('isDecorative',this.checked)"></div>
+  </div>
+  <div class="prop-section">
+    <div class="prop-section-title">Stats</div>
+    <div class="prop-row"><span class="prop-label">Health</span><input type="number" class="prop-input" id="health" value="${o.health||0}" onchange="setProp('health',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Damage</span><input type="number" class="prop-input" id="damage" value="${o.damage||0}" onchange="setProp('damage',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Speed</span><input type="number" class="prop-input" id="speed" value="${o.speed||0}" onchange="setProp('speed',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Jump Force</span><input type="number" class="prop-input" id="jumpForce" value="${o.jumpForce||0}" onchange="setProp('jumpForce',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Patrol Dist</span><input type="number" class="prop-input" id="patrolDistance" value="${o.patrolDistance||0}" onchange="setProp('patrolDistance',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Move Dist</span><input type="number" class="prop-input" id="moveDistance" value="${o.moveDistance||0}" onchange="setProp('moveDistance',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Move Speed</span><input type="number" class="prop-input" id="moveSpeed" value="${o.moveSpeed||0}" onchange="setProp('moveSpeed',this.value)"></div>
+    <div class="prop-row"><span class="prop-label">Move Axis</span>
+      <select class="prop-input" id="moveAxis" onchange="setProp('moveAxis',this.value)">
+        <option value="h"${o.moveAxis==='h'?' selected':''}>Horizontal</option>
+        <option value="v"${o.moveAxis==='v'?' selected':''}>Vertical</option>
+      </select>
+    </div>
+    <div class="prop-row"><span class="prop-label">Spring Force</span><input type="number" class="prop-input" id="springForce" value="${o.springForce||0}" onchange="setProp('springForce',this.value)"></div>`;
+
+  // Shooter properties (only if enemy and shooter)
+  if(o.isEnemy && o.isShooter) {
+    h += `
+    <div class="prop-section">
+      <div class="prop-section-title">Shooter Settings</div>
+      <div class="prop-row"><span class="prop-label">Bullet Speed</span><input type="number" class="prop-input" id="bulletSpeed" value="${o.bulletSpeed||200}" onchange="setProp('bulletSpeed',this.value)"></div>
+      <div class="prop-row"><span class="prop-label">Bullet Damage</span><input type="number" class="prop-input" id="bulletDamage" value="${o.bulletDamage||10}" onchange="setProp('bulletDamage',this.value)"></div>
+      <div class="prop-row"><span class="prop-label">Fire Rate (Hz)</span><input type="number" class="prop-input" id="fireRate" value="${o.fireRate||1}" step="0.1" min="0.1" onchange="setProp('fireRate',this.value)"></div>
+    </div>`;
+  }
+
+  h += `
+  <div class="prop-section">
+    <div class="prop-section-title">Layer</div>
+    <div class="layer-btns">
+      <button class="layer-btn" onclick="bringToFront()">▲ Front</button>
+      <button class="layer-btn" onclick="sendToBack()">▼ Back</button>
+    </div>
+    <button class="del-btn" onclick="deleteSelected()">✕ Delete Object</button>
+  </div>`;
+  panel.innerHTML=h;
+}
+
+function updatePropXY(){
+  const xi=document.getElementById('prop-x'),yi=document.getElementById('prop-y');
+  if(S.selected!==null&&S.objects[S.selected]){const o=S.objects[S.selected];if(xi)xi.value=Math.round(o.x);if(yi)yi.value=Math.round(o.y);}
+}
+
+const ID_MAP={name:'name',shape:'shape','prop-x':'x','prop-y':'y',width:'w',height:'h',health:'health',damage:'damage',speed:'speed',jumpForce:'jumpForce',patrolDistance:'patrolDistance',moveDistance:'moveDistance',moveSpeed:'moveSpeed',moveAxis:'moveAxis',springForce:'springForce',bulletSpeed:'bulletSpeed',bulletDamage:'bulletDamage',fireRate:'fireRate'};
+const CHECK_MAP={isPlayer:'isPlayer',isEnemy:'isEnemy',isPlatform:'isPlatform',isSolid:'isSolid',isCoin:'isCoin',isSpike:'isSpike',isSpring:'isSpring',isCheckpoint:'isCheckpoint',oneWay:'oneWay',isMovingPlatform:'isMovingPlatform',isDecorative:'isDecorative',affectedByGravity:'affectedByGravity',isShooter:'isShooter'};
+
+function setProp(id,val){
+  if(S.selected===null)return;
+  const o=S.objects[S.selected],field=ID_MAP[id];if(!field)return;
+  const numFields=['x','y','w','h','health','damage','speed','jumpForce','patrolDistance','moveDistance','moveSpeed','springForce','bulletSpeed','bulletDamage','fireRate'];
+  if(numFields.includes(field))o[field]=parseFloat(val)||0;else o[field]=val;
+  if(field==='health')o.maxHealth=o.health;
+  drawEditor();
+}
+function setPropColor(val){if(S.selected===null)return;S.objects[S.selected].color=val;drawEditor();}
+function setCheck(id,val){if(S.selected===null)return;const field=CHECK_MAP[id];if(field){S.objects[S.selected][field]=val;updatePropPanel();drawEditor();}}
+function deleteSelected(){
+  if(!S.selectedIndices.size)return;snapshot();
+  [...S.selectedIndices].sort((a,b)=>b-a).forEach(i=>S.objects.splice(i,1));
+  S.selectedIndices=new Set();S.selected=null;
+  updatePropPanel();updateObjCount();updateSelectionBtn();drawEditor();
+  checkTutorialProgress();
+}
+function clearAll(){if(S.playing)stopPlay();snapshot();S.objects=[];S.selected=null;S.selectedIndices=new Set();updatePropPanel();updateObjCount();updateSelectionBtn();drawEditor();}
+
+// ==================== SAVE / LOAD ====================
+function saveLevel(){
+  const data={version:3,world:{w:canvas.width,h:canvas.height},bg:S.bg,objects:S.objects.map(({vx,vy,onGround,patrolStart,patrolDir,alive,...rest})=>rest)};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='portacreate-level.json';a.click();showToast('Level exported!','ok');
+}
+document.getElementById('file-load-input').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.world){canvas.width=d.world.w;canvas.height=d.world.h;}
+      if(d.bg)Object.assign(S.bg,d.bg);
+      if(d.objects){S.objects=d.objects.map(o=>({...o,vx:0,vy:0,onGround:false,patrolStart:o.x,patrolDir:1,alive:true,maxHealth:o.health||0,movePhase:0}));S.nextId=Math.max(...S.objects.map(o=>o.id||0),0)+1;}
+      if(S.playing)stopPlay();
+      S.selected=null;S.selectedIndices=new Set();
+      document.getElementById('world-size-label').textContent=canvas.width+'×'+canvas.height;
+      updateObjCount();updateSelectionBtn();setZoom(S.zoom);zoomFit();snapshot();drawEditor();
+      showToast(`Loaded ${S.objects.length} objects`,'ok');
+    }catch(err){showToast('Invalid file','error');}
+  };
+  r.readAsText(f);e.target.value='';
+});
+
+// ==================== BG MODAL (updated) ====================
+function openBgModal(){
+  const bg=S.bg;
+  document.getElementById('bg-world-w').value=canvas.width;
+  document.getElementById('bg-world-h').value=canvas.height;
+  document.getElementById('bg-type').value=bg.type;
+  document.getElementById('bg-solid-color').value=bg.solidColor;
+  document.getElementById('bg-color-top').value=bg.colorTop;
+  document.getElementById('bg-color-bot').value=bg.colorBot;
+  document.getElementById('bg-show-grid').checked=bg.showGrid;
+  document.getElementById('bg-grid-color').value=bg.gridColor;
+  document.getElementById('bg-grid-size').value=bg.gridSize;
+  document.getElementById('bg-lava-dmg').value=bg.lavaDamage;
+  document.getElementById('bg-lava-h').value=bg.lavaHeight;
+  document.getElementById('bg-respawn').checked = bg.respawn !== false; // default true
+  syncLavaBtn();onBgTypeChange();
+  document.getElementById('bg-overlay').classList.add('open');
+}
+function closeBgModal(){
+  const bg=S.bg;
+  bg.type=document.getElementById('bg-type').value;
+  bg.solidColor=document.getElementById('bg-solid-color').value;
+  bg.colorTop=document.getElementById('bg-color-top').value;
+  bg.colorBot=document.getElementById('bg-color-bot').value;
+  bg.showGrid=document.getElementById('bg-show-grid').checked;
+  bg.gridColor=document.getElementById('bg-grid-color').value;
+  bg.gridSize=parseInt(document.getElementById('bg-grid-size').value)||40;
+  bg.lavaDamage=parseFloat(document.getElementById('bg-lava-dmg').value)||25;
+  bg.lavaHeight=parseInt(document.getElementById('bg-lava-h').value)||20;
+  bg.respawn = document.getElementById('bg-respawn').checked;
+  document.getElementById('bg-overlay').classList.remove('open');
+  if(!S.playing)drawEditor();
+}
+function closeBgModalOutside(e){if(e.target===document.getElementById('bg-overlay'))closeBgModal();}
+function onBgTypeChange(){
+  const t=document.getElementById('bg-type').value;
+  document.getElementById('row-solid-color').style.display=t==='solid'?'flex':'none';
+  document.getElementById('row-custom-grad').style.display=t==='custom'?'block':'none';
+}
+function applyWorldSize(){
+  const w=Math.max(200,Math.min(3000,parseInt(document.getElementById('bg-world-w').value)||800));
+  const h=Math.max(200,Math.min(2000,parseInt(document.getElementById('bg-world-h').value)||500));
+  canvas.width=w;canvas.height=h;
+  document.getElementById('world-size-label').textContent=w+'×'+h;
+  S.objects.forEach(o=>{o.x=Math.max(0,Math.min(o.x,w-o.w));o.y=Math.max(0,Math.min(o.y,h-o.h));});
+  setZoom(S.zoom);setTimeout(zoomFit,50);
+  if(!S.playing)drawEditor();
+}
+function toggleLava(){
+  S.bg.lava=!S.bg.lava;
+  S.bg.lavaDamage=parseFloat(document.getElementById('bg-lava-dmg').value)||25;
+  S.bg.lavaHeight=parseInt(document.getElementById('bg-lava-h').value)||20;
+  syncLavaBtn();if(!S.playing)drawEditor();
+}
+function syncLavaBtn(){
+  const btn=document.getElementById('btn-lava');const on=S.bg.lava;
+  btn.classList.toggle('lava-on',on);btn.setAttribute('aria-pressed',on);
+  btn.querySelector('span').textContent=on?'🌋 LAVA IS ON — Click to Disable':'🌋 The Floor is Lava';
+  document.getElementById('row-lava-dmg').style.display=on?'flex':'none';
+  document.getElementById('row-lava-h').style.display=on?'flex':'none';
+  document.getElementById('lava-indicator').classList.toggle('active',on);
+}
+
+// ==================== CODE GENERATION ====================
+function generateCode(){
+  const W=canvas.width,H=canvas.height,bg=S.bg;
+  const objData=JSON.stringify(S.objects.map(({vx,vy,onGround,patrolStart,patrolDir,alive,...r})=>r));
+  const htmlCode=`<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>My Level</title>\n</head>\n<body style="margin:0;background:#0d0f14">\n<canvas id="gameCanvas"></canvas>\n<script src="game.js"><\/script>\n</body>\n</html>`;
+  const cssCode=`body{margin:0;background:#0d0f14;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;}\n#gameCanvas{display:block;}`;
+  const jsCode=`// Generated by PortaCreate\nconst canvas=document.getElementById('gameCanvas');\nconst ctx=canvas.getContext('2d');\ncanvas.width=${W};canvas.height=${H};\nconst GRAVITY=900;\nconst bg=${JSON.stringify(bg)};\nconst levelData=${objData};\nconst keys={};\ndocument.addEventListener('keydown',e=>keys[e.code]=true);\ndocument.addEventListener('keyup',e=>keys[e.code]=false);\n// Load objects\nconst objects=levelData.map(o=>({...o,vx:0,vy:0,onGround:false,patrolStart:o.x,patrolDir:1,alive:true,maxHealth:o.health||0,movePhase:0,baseMoveX:o.x,baseMoveY:o.y}));\nlet score=0,gameOver=false;\n// Full runtime available in PortaCreate export`;
+  renderCode('code-html',htmlCode);renderCode('code-js',jsCode);renderCode('code-css',cssCode);
+  document.getElementById('code-html')._raw=htmlCode;document.getElementById('code-js')._raw=jsCode;document.getElementById('code-css')._raw=cssCode;
+}
+function renderCode(elId,code){
+  const el=document.getElementById(elId);
+  let esc=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  esc=esc.replace(/(\/\/[^\n]*)/g,'<span class="cmt">$1</span>');
+  esc=esc.replace(/\b(const|let|var|function|return|if|else|for|while|of|in|new|true|false|null|undefined|class|this)\b/g,'<span class="kw">$1</span>');
+  esc=esc.replace(/('[^']*'|"[^"]*"|`[^`]*`)/g,'<span class="str">$1</span>');
+  esc=esc.replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$1</span>');
+  el.innerHTML=esc;
+}
+function copyCode(which,btn){
+  const ids={html:'code-html',js:'code-js',css:'code-css'};
+  const text=document.getElementById(ids[which])._raw||'';
+  navigator.clipboard.writeText(text).then(()=>{btn.textContent='✓ Copied!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);});
+}
+
+// ==================== TABS & PANELS ====================
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{const active=(i===0&&tab==='main')||(i===1&&tab==='script');b.classList.toggle('active',active);b.setAttribute('aria-selected',active);});
+  const main=document.getElementById('main-tab'),script=document.getElementById('script-tab');
+  main.style.display=tab==='main'?'flex':'none';script.classList.toggle('active',tab==='script');
+  if(tab==='script'){script.style.display='flex';generateCode();}else{script.style.display='none';}
+  document.getElementById('playbar').style.display=tab==='main'?'flex':'none';
+}
+function toggleRightPanel(){S.rightOpen=!S.rightOpen;const rp=document.getElementById('right-panel');rp.classList.toggle('closed',!S.rightOpen);document.getElementById('toggle-arrow').textContent=S.rightOpen?'◀':'▶';}
+function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';document.body.className='theme-'+S.theme;drawEditor();}
+
+// ==================== SNAP & KBD HELP ====================
+function toggleSnap(){S.snapGrid=S.snapGrid>1?1:8;const b=document.getElementById('btn-snap');b.classList.toggle('snap-on',S.snapGrid>1);b.setAttribute('aria-pressed',S.snapGrid>1);showToast(S.snapGrid>1?'Snap ON (8px)':'Snap OFF');}
+function showKbdHelp(){document.getElementById('kbd-help').classList.add('open');}
+function hideKbdHelp(){document.getElementById('kbd-help').classList.remove('open');}
+
+// ==================== TUTORIAL FUNCTIONS ====================
+function startTutorial() {
+  if (S.playing) stopPlay();
+  // Clear current objects to start fresh
+  if (S.objects.length > 0) {
+    if (!confirm("Start tutorial? This will clear your current level.")) return;
+    S.objects = [];
+    S.selectedIndices.clear();
+    S.selected = null;
+  }
+  S.tutorial.active = true;
+  S.tutorial.step = 0;
+  updateTutorialUI();
+  document.getElementById('tutorial-modal').classList.add('active');
+  drawEditor();
+  showToast('Tutorial started! Follow the instructions.', 'ok');
+}
+
+function cancelTutorial() {
+  S.tutorial.active = false;
+  document.getElementById('tutorial-modal').classList.remove('active');
+  document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
+}
+
+function nextTutorialStep() {
+  if (S.tutorial.step < S.tutorial.steps.length - 1) {
+    S.tutorial.step++;
+    updateTutorialUI();
+    showToast('✅ Step completed!', 'ok');
+  } else {
+    showToast('🎉 Tutorial complete! You built your first level!', 'ok');
+    cancelTutorial();
+  }
+}
+
+function updateTutorialUI() {
+  const step = S.tutorial.step;
+  const steps = S.tutorial.steps;
+  document.getElementById('tutorial-step').textContent = `Step ${step+1}/${steps.length}`;
+  document.getElementById('tutorial-desc').textContent = steps[step].desc;
+  const progress = ((step+1) / steps.length) * 100;
+  document.getElementById('tutorial-progress-fill').style.width = progress + '%';
+
+  document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
+  if (step === 0) {
+    const platformShape = document.querySelector('.shape-item[data-type="platform"]');
+    if (platformShape) platformShape.classList.add('tutorial-highlight');
+  } else if (step === 1) {
+    const playerShape = document.querySelector('.shape-item[data-type="player"]');
+    if (playerShape) playerShape.classList.add('tutorial-highlight');
+  } else if (step === 3) {
+    const coinShape = document.querySelector('.shape-item[data-type="coin"]');
+    if (coinShape) coinShape.classList.add('tutorial-highlight');
+  } else if (step === 4) {
+    const enemyShape = document.querySelector('.shape-item[data-type="enemy"]');
+    if (enemyShape) enemyShape.classList.add('tutorial-highlight');
+  } else if (step === 5) {
+    const playBtn = document.getElementById('btn-play');
+    if (playBtn) playBtn.classList.add('tutorial-highlight');
+  }
+}
+
+function checkTutorialProgress() {
+  if (!S.tutorial.active) return;
+  const step = S.tutorial.step;
+  const steps = S.tutorial.steps;
+  if (step >= steps.length) return;
+  if (steps[step].check()) {
+    playSound('place');
+    nextTutorialStep();
+  }
+}
+
+// ==================== INIT ====================
+const ground = createObj('platform', 0, 468);
+ground.w = 800;
+ground.h = 32;
+S.objects.push(ground);
+S.nextId++;
+snapshot(); updateObjCount(); updateSelectionBtn(); setZoom(1);
+document.getElementById('main-tab').style.display = 'flex';
+document.getElementById('script-tab').style.display = 'none';
+setTimeout(zoomFit, 50);
+editorLoop();
+announce('PortaCreate loaded. Press ? for keyboard shortcuts, 📘 for tutorial.');
+</script>
+</body>
+</html>
